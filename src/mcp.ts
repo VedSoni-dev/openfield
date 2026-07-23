@@ -169,6 +169,36 @@ server.registerTool(
   },
 );
 
+server.registerTool(
+  "direct_video",
+  {
+    title: "Direct a multi-shot video",
+    description:
+      "Turn a brief into a storyboard (shot list) and generate every shot. Needs an LLM key (OPENROUTER_API_KEY). Set dryRun to only return the plan.",
+    inputSchema: {
+      brief: z.string(),
+      character: z.string().optional(),
+      model: z.string().optional(),
+      dryRun: z.boolean().default(false),
+    },
+  },
+  async ({ brief, character, model, dryRun }) => {
+    const { llmConfigured, planStoryboard, runStoryboard } = await import("./orchestrator/index.js");
+    if (!llmConfigured()) return text("No LLM key. Set OPENROUTER_API_KEY or OPENFIELD_LLM_KEY.");
+    const sb = await planStoryboard(brief, character);
+    if (model) sb.model = model;
+    const plan = `"${sb.title}" — ${sb.shots.length} shots on ${sb.model}\n${sb.shots
+      .map((s, i) => `  ${i + 1}. ${s.subject}${s.presets.length ? ` [${s.presets.join(", ")}]` : ""}`)
+      .join("\n")}`;
+    if (dryRun) return text(plan);
+    const result = await runStoryboard(sb, { character, wait: false });
+    const jobs = result.shots
+      .map((s) => `  shot ${s.index + 1}: ${s.status} ${s.output?.join(" ") ?? s.error ?? ""}`)
+      .join("\n");
+    return text(`${plan}\n\nprovider: ${result.provider}\n${jobs}\n\nPoll each job with check_status.`);
+  },
+);
+
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);

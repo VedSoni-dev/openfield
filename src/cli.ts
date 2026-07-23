@@ -102,6 +102,36 @@ async function main() {
       break;
     }
 
+    case "auto":
+    case "direct": {
+      const brief = flag("brief") ?? args[1];
+      if (!brief) return fail('need a brief: openfield auto "a 3-shot ad for a coffee brand"');
+      const { llmConfigured, planStoryboard, runStoryboard } = await import("./orchestrator/index.js");
+      if (!llmConfigured()) return fail("no LLM key. Set OPENROUTER_API_KEY (free tier) or OPENFIELD_LLM_KEY.");
+      const character = flag("character");
+      console.log("planning storyboard...");
+      const sb = await planStoryboard(brief, character);
+      if (flag("model")) sb.model = flag("model")!;
+      console.log(`\n"${sb.title}" — ${sb.shots.length} shots on ${sb.model}`);
+      sb.shots.forEach((s, i) =>
+        console.log(`  ${i + 1}. ${s.subject}${s.presets.length ? ` [${s.presets.join(", ")}]` : ""}`),
+      );
+      if (has("dry")) break;
+      console.log("\ngenerating...");
+      const result = await runStoryboard(sb, {
+        character,
+        wait: has("wait"),
+        onProgress: (m) => console.log(m),
+      });
+      const ok = result.shots.filter((s) => s.status === "succeeded").length;
+      console.log(`\ndone: ${ok}/${result.shots.length} shots ok`);
+      for (const s of result.shots) {
+        if (s.output?.length) console.log(`  shot ${s.index + 1}: ${s.output.join(" ")}`);
+        if (s.error) console.log(`  shot ${s.index + 1} error: ${s.error}`);
+      }
+      break;
+    }
+
     case "soul": {
       const sub = args[1];
       if (sub === "list") {
@@ -147,8 +177,12 @@ Usage:
   openfield status --provider fal --job <id>
   openfield soul add nova --name "Nova" --ref <img-url> --traits "red bob, freckles"
   openfield soul list | show <id> | rm <id>
+  openfield auto "a 3-shot moody ad for a coffee brand" --model wan-2.2 --wait
+  openfield auto "..." --character nova --dry     # just plan, no generation
 
-Keys (bring your own): FAL_KEY, REPLICATE_API_TOKEN, OPENFIELD_CUSTOM_URL`);
+Keys (bring your own):
+  video:  FAL_KEY, REPLICATE_API_TOKEN, OPENFIELD_CUSTOM_URL
+  auto:   OPENROUTER_API_KEY (free tier) or OPENFIELD_LLM_KEY`);
   }
 }
 
