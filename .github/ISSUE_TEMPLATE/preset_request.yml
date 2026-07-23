@@ -1,0 +1,25 @@
+name: New preset
+description: Suggest a camera move, lens, lighting, style, or VFX preset
+labels: [preset]
+body:
+  - type: input
+    id: label
+    attributes:
+      label: Preset name
+      placeholder: "Dolly Zoom / Vertigo"
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options: [camera, lens, lighting, style, vfx]
+    validations:
+      required: true
+  - type: textarea
+    id: template
+    attributes:
+      label: Prompt template
+      description: Model-agnostic prose. Use {subject} where the subject belongs.
+    validations:
+      required: true

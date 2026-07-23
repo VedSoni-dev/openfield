@@ -1,0 +1,77 @@
+// Lighting presets. Named lighting setups every DP knows.
+import type { Preset } from "./types.js";
+
+export const LIGHTING_PRESETS: Preset[] = [
+  {
+    id: "golden-hour",
+    label: "Golden Hour",
+    category: "lighting",
+    desc: "Warm low sun, long shadows, soft glow.",
+    template: "golden hour lighting, warm low-angle sun, long soft shadows, gentle rim glow on the subject, hazy atmosphere",
+    tags: ["warm", "sunset", "sunrise", "soft"],
+  },
+  {
+    id: "rembrandt",
+    label: "Rembrandt",
+    category: "lighting",
+    desc: "Classic portrait key with triangle cheek light.",
+    template: "Rembrandt lighting, dramatic single key light, characteristic triangle of light on the shadowed cheek, deep contrast",
+    tags: ["portrait", "chiaroscuro", "moody"],
+  },
+  {
+    id: "neon-noir",
+    label: "Neon Noir",
+    category: "lighting",
+    desc: "Cyberpunk magenta-cyan neon, wet reflections.",
+    template: "neon noir lighting, saturated magenta and cyan neon glow, wet reflective surfaces, moody nighttime city atmosphere",
+    tags: ["cyberpunk", "neon", "night", "blade-runner"],
+  },
+  {
+    id: "high-key",
+    label: "High Key",
+    category: "lighting",
+    desc: "Bright, even, shadowless clean look.",
+    template: "high-key lighting, bright even illumination, minimal shadows, clean airy commercial look",
+    tags: ["bright", "clean", "commercial", "airy"],
+  },
+  {
+    id: "low-key",
+    label: "Low Key",
+    category: "lighting",
+    desc: "Dark, single-source, heavy shadow drama.",
+    template: "low-key lighting, predominantly dark frame, single dramatic light source, deep pooling shadows, high contrast",
+    tags: ["dark", "dramatic", "shadow", "thriller"],
+  },
+  {
+    id: "backlit-silhouette",
+    label: "Backlit Silhouette",
+    category: "lighting",
+    desc: "Subject dark against bright rim-lit background.",
+    template: "strong backlight rendering the subject as a rim-lit silhouette against a bright background, atmospheric haze catching the light",
+    tags: ["silhouette", "rim", "contre-jour"],
+  },
+  {
+    id: "practical-firelight",
+    label: "Firelight",
+    category: "lighting",
+    desc: "Warm flickering practical fire glow.",
+    template: "warm flickering firelight, dancing orange glow, soft moving shadows, intimate practical light source",
+    tags: ["fire", "candle", "warm", "flicker"],
+  },
+  {
+    id: "overcast-soft",
+    label: "Overcast Soft",
+    category: "lighting",
+    desc: "Giant softbox sky, flat even shadowless.",
+    template: "soft overcast lighting, giant diffuse softbox sky, even flat illumination, gentle shadows, muted natural tones",
+    tags: ["soft", "cloudy", "diffuse", "natural"],
+  },
+  {
+    id: "volumetric-godrays",
+    label: "God Rays",
+    category: "lighting",
+    desc: "Volumetric light shafts through haze.",
+    template: "dramatic volumetric god rays, visible shafts of light cutting through haze and dust, atmospheric depth",
+    tags: ["volumetric", "shafts", "atmosphere", "haze"],
+  },
+];

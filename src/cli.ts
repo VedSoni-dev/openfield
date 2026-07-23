@@ -1,0 +1,117 @@
+#!/usr/bin/env node
+import "dotenv/config";
+import { CATALOG } from "./providers/catalog.js";
+import { PRESETS, searchPresets } from "./presets/index.js";
+import { compose } from "./compose.js";
+import { generate, waitFor, pollOnce, configuredProviders, pickRoute } from "./router.js";
+
+const args = process.argv.slice(2);
+const cmd = args[0];
+
+function flag(name: string): string | undefined {
+  const i = args.indexOf(`--${name}`);
+  return i >= 0 ? args[i + 1] : undefined;
+}
+function has(name: string): boolean {
+  return args.includes(`--${name}`);
+}
+
+async function main() {
+  switch (cmd) {
+    case "models": {
+      console.log("Models (route picked by which key you have):\n");
+      for (const m of CATALOG) {
+        const routes = m.routes.map((r) => r.provider).join(", ");
+        console.log(`  ${m.id.padEnd(18)} ${m.label}  [${routes}]`);
+      }
+      console.log(`\nConfigured providers: ${configuredProviders().join(", ") || "none — set a key"}`);
+      break;
+    }
+
+    case "presets": {
+      const q = args[1];
+      const list = q ? searchPresets(q) : PRESETS;
+      console.log(`${list.length} preset(s):\n`);
+      for (const p of list) {
+        console.log(`  ${p.id.padEnd(16)} [${p.category}] ${p.desc}`);
+      }
+      break;
+    }
+
+    case "compose": {
+      const subject = flag("subject") ?? args[1];
+      if (!subject) return fail("need --subject \"...\"");
+      const presets = (flag("presets") ?? "").split(",").filter(Boolean);
+      const c = compose({ subject, presets });
+      console.log("PROMPT:\n" + c.prompt);
+      if (Object.keys(c.params).length) console.log("\nPARAMS:\n" + JSON.stringify(c.params, null, 2));
+      break;
+    }
+
+    case "generate": {
+      const subject = flag("subject") ?? args[1];
+      const model = flag("model") ?? "seedance-2.0";
+      if (!subject) return fail('need --subject "..."');
+      const presets = (flag("presets") ?? "").split(",").filter(Boolean);
+      const route = pickRoute(model);
+      if (!route) return fail(`no configured key for ${model}. Run 'openfield models'.`);
+
+      const c = compose({ subject, presets });
+      console.log(`model=${model} via ${route.provider}`);
+      console.log(`prompt: ${c.prompt}\n`);
+
+      const { job, provider } = await generate({
+        subject,
+        presets,
+        model,
+        image: flag("image"),
+        durationSec: flag("duration") ? Number(flag("duration")) : undefined,
+        aspectRatio: flag("aspect"),
+        resolution: flag("resolution"),
+      });
+      if (job.status === "failed") return fail(job.error ?? "create failed");
+      console.log(`job ${job.id} queued on ${provider}`);
+
+      if (has("wait")) {
+        console.log("waiting...");
+        const done = await waitFor(provider, job.id);
+        if (done.status === "succeeded") console.log("done:\n" + (done.output ?? []).join("\n"));
+        else fail(done.error ?? "generation failed");
+      } else {
+        console.log(`poll: openfield status --provider ${provider} --job ${job.id}`);
+      }
+      break;
+    }
+
+    case "status": {
+      const provider = flag("provider");
+      const job = flag("job");
+      if (!provider || !job) return fail("need --provider and --job");
+      const j = await pollOnce(provider, job);
+      console.log(`status: ${j.status}`);
+      if (j.output?.length) console.log(j.output.join("\n"));
+      if (j.error) console.log("error: " + j.error);
+      break;
+    }
+
+    default:
+      console.log(`openfield — open-source Higgsfield. BYO keys, free preset library.
+
+Usage:
+  openfield models                       list models + which providers reach them
+  openfield presets [query]              list/search the free preset library
+  openfield compose --subject "..." --presets dolly-in,orbit
+                                         preview the composed prompt (no API call)
+  openfield generate --subject "..." --model seedance-2.0 --presets orbit --wait
+  openfield status --provider fal --job <id>
+
+Keys (bring your own): FAL_KEY, REPLICATE_API_TOKEN, OPENFIELD_CUSTOM_URL`);
+  }
+}
+
+function fail(msg: string) {
+  console.error("error: " + msg);
+  process.exitCode = 1;
+}
+
+main().catch((e) => fail(e.message));

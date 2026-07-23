@@ -1,0 +1,71 @@
+// VFX / motion-effect presets. Transformations, particles, time effects.
+import type { Preset } from "./types.js";
+
+export const VFX_PRESETS: Preset[] = [
+  {
+    id: "explosion",
+    label: "Explosion",
+    category: "vfx",
+    desc: "Fiery blast with debris and shockwave.",
+    template: "a massive fiery explosion erupts, billowing fireball, flying debris, shockwave distortion, {subject} silhouetted against the blast",
+    tags: ["fire", "blast", "action", "boom"],
+  },
+  {
+    id: "disintegrate",
+    label: "Disintegrate",
+    category: "vfx",
+    desc: "Subject dissolves into flying particles.",
+    template: "{subject} disintegrates into a storm of drifting ash and glowing particles, dissolving edges, Thanos-snap dispersal",
+    tags: ["dissolve", "particles", "snap", "dust"],
+  },
+  {
+    id: "transform-morph",
+    label: "Morph Transform",
+    category: "vfx",
+    desc: "Seamless liquid morph into new form.",
+    template: "{subject} seamlessly morphs and transforms, fluid liquid-metal transition, shape flowing into a new form",
+    tags: ["morph", "transform", "liquid", "shapeshift"],
+  },
+  {
+    id: "slow-motion",
+    label: "Slow Motion",
+    category: "vfx",
+    desc: "Ultra slow high-frame-rate motion.",
+    template: "extreme slow motion, ultra high frame rate, every subtle movement of {subject} stretched and detailed, floating quality",
+    params: { speed: "slow" },
+    tags: ["slowmo", "highspeed", "phantom"],
+  },
+  {
+    id: "timelapse",
+    label: "Timelapse",
+    category: "vfx",
+    desc: "Accelerated time, streaking motion.",
+    template: "timelapse, dramatically accelerated time, clouds and light streaking past {subject}, long-exposure motion trails",
+    params: { speed: "fast" },
+    tags: ["fast", "accelerate", "clouds", "trails"],
+  },
+  {
+    id: "hologram",
+    label: "Hologram",
+    category: "vfx",
+    desc: "Glitchy translucent holographic projection.",
+    template: "{subject} rendered as a glowing translucent hologram, cyan scan lines, flickering glitch, sci-fi projection",
+    tags: ["scifi", "glitch", "projection", "translucent"],
+  },
+  {
+    id: "freeze-frame",
+    label: "Freeze Frame",
+    category: "vfx",
+    desc: "Action stops dead then resumes.",
+    template: "the action of {subject} suddenly freezes mid-motion into a held frozen frame, then snaps back to full motion",
+    tags: ["freeze", "stop", "hold"],
+  },
+  {
+    id: "particles-embers",
+    label: "Floating Embers",
+    category: "vfx",
+    desc: "Drifting glowing embers and sparks.",
+    template: "glowing embers and sparks drift through the air around {subject}, soft bokeh particles floating, warm atmospheric magic",
+    tags: ["embers", "sparks", "particles", "atmosphere"],
+  },
+];

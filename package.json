@@ -1,0 +1,57 @@
+{
+  "name": "openfield",
+  "version": "0.1.0",
+  "description": "Open-source Higgsfield. Bring your own video model keys, get the cinematic preset library for free.",
+  "type": "module",
+  "bin": {
+    "openfield": "./dist/cli.js",
+    "openfield-mcp": "./dist/mcp.js"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts",
+    "mcp": "tsx src/mcp.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run typecheck && npm run lint && npm run test"
+  },
+  "keywords": [
+    "ai-video",
+    "seedance",
+    "kling",
+    "veo",
+    "wan",
+    "higgsfield",
+    "byok",
+    "mcp",
+    "text-to-video"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/VedSoni-dev/openfield.git"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "dotenv": "^16.4.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.3.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

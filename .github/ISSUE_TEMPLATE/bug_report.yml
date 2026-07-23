@@ -1,0 +1,28 @@
+name: Bug report
+description: Something broke
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What did you run, and what went wrong?
+      placeholder: "openfield generate --model seedance-2.0 ... → error ..."
+    validations:
+      required: true
+  - type: input
+    id: provider
+    attributes:
+      label: Provider
+      description: Which provider/key was in use (fal, replicate, custom)?
+  - type: input
+    id: version
+    attributes:
+      label: openfield version + OS + Node
+      placeholder: "0.1.0, macOS 14, Node 20"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Paste the error. REDACT ANY API KEYS.
+      render: shell
