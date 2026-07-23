@@ -8,6 +8,7 @@ import { custom } from "./providers/custom.js";
 import { compose, type ComposeInput } from "./compose.js";
 import { getCharacter, identityPhrase } from "./soul.js";
 import { getLocation, locationPhrase } from "./locations.js";
+import { orderAndCap, resolveRefUrl, referenceLegend, type Ref } from "./refs.js";
 
 const PROVIDERS: Record<string, Provider> = {
   fal,
@@ -42,6 +43,8 @@ export interface GenerateOptions extends ComposeInput {
   character?: string;
   /** Location handle. Injects the setting phrase. */
   location?: string;
+  /** Extra reference images to attach (elements, schematic, first-frame). */
+  refs?: Ref[];
   extra?: Record<string, unknown>;
 }
 
@@ -60,23 +63,31 @@ export async function generate(opts: GenerateOptions): Promise<Dispatched> {
   }
   const provider = providerFor(route);
 
-  // Soul ID: resolve character, weave identity phrase + reference images.
+  // Soul ID: resolve character, weave identity phrase + attach reference images.
   let identity = opts.identity;
-  let references: string[] | undefined;
+  const refObjs: Ref[] = [];
   if (opts.character) {
     const c = getCharacter(opts.character);
     if (!c) throw new Error(`unknown character: ${opts.character}. Run 'openfield soul list'.`);
     identity = identityPhrase(c);
-    references = c.refs;
+    for (const src of c.refs) refObjs.push({ handle: c.id, role: "character", src });
   }
   let setting = opts.setting;
   if (opts.location) {
     const l = getLocation(opts.location);
     if (!l) throw new Error(`unknown location: ${opts.location}.`);
     setting = locationPhrase(l);
+    for (const src of l.refs ?? []) refObjs.push({ handle: l.id, role: "location", src });
   }
+  // Explicit refs passed by the caller (elements, schematics, first-frame).
+  for (const r of opts.refs ?? []) refObjs.push(r);
 
-  const { prompt, params } = compose({ ...opts, identity, setting });
+  // Order by priority, cap, resolve local paths to data URIs, build the legend.
+  const { kept } = orderAndCap(refObjs, 10);
+  const references = kept.length ? kept.map((r) => resolveRefUrl(r.src)) : undefined;
+  const legend = referenceLegend(kept);
+
+  const { prompt, params } = compose({ ...opts, identity, setting, legend });
   const job = await provider.create({
     prompt,
     model: opts.model,

@@ -16,6 +16,9 @@ export interface ComposeInput {
   setting?: string;
   /** Cinema Studio selection (camera body, lens, focal, aperture, shot). */
   cinema?: CinemaSelection;
+  /** Reference legend, prepended as the first line(s) so the model knows what
+   *  each attached reference image is. */
+  legend?: string;
 }
 
 export interface Composed {
@@ -52,5 +55,9 @@ export function compose(input: ComposeInput): Composed {
     Object.assign(params, cin.params);
   }
 
-  return { prompt: parts.join(". "), params, used };
+  const body = parts.join(". ");
+  // Reference legend leads the prompt (its own line) so the model binds each
+  // attached image before reading the scene.
+  const prompt = input.legend ? `${input.legend.trim()}\n${body}` : body;
+  return { prompt, params, used };
 }
