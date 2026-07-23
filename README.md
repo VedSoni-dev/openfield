@@ -2,6 +2,10 @@
 
 **Open-source Higgsfield. Bring your own video-model keys — get the cinematic preset library, character consistency, an AI director, and a desktop app for free.**
 
+![openfield Studio demo](site/demo.gif)
+
+**[▶ Live landing page](https://vedsoni-dev.github.io/openfield/)**
+
 Higgsfield is really four things: (1) a router that resells Seedance / Kling / Veo / Wan behind one subscription, (2) a paywalled library of "camera control" presets that is just prompt engineering, (3) *Soul ID* character consistency, and (4) *Hermes*, an agent that orchestrates the whole pipeline. openfield gives you all four with **your own keys** and no markup.
 
 ## Why

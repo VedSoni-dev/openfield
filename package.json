@@ -7,7 +7,11 @@
     "openfield": "./dist/cli.js",
     "openfield-mcp": "./dist/mcp.js"
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "engines": {
     "node": ">=20"
   },
@@ -46,10 +50,12 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@napi-rs/canvas": "^1.0.2",
     "@types/node": "^24.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^9.0.0",
+    "gifenc": "^1.0.3",
     "prettier": "^3.3.0",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0",
