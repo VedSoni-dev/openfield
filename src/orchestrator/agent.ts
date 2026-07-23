@@ -11,6 +11,7 @@ import { PRESETS, searchPresets } from "../presets/index.js";
 import { CINEMA_GROUPS } from "../cinema.js";
 import { CATALOG } from "../providers/catalog.js";
 import { listCharacters } from "../soul.js";
+import { listLocations } from "../locations.js";
 import { StoryboardSchema, sanitize, type Storyboard } from "./plan.js";
 
 export interface AgentState {
@@ -43,6 +44,14 @@ export const TOOLS: ToolDef[] = [
     function: {
       name: "list_characters",
       description: "List saved Soul ID characters that can be featured for consistency.",
+      parameters: { type: "object", properties: {}, required: [] },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_locations",
+      description: "List saved locations (settings) the film can take place in.",
       parameters: { type: "object", properties: {}, required: [] },
     },
   },
@@ -103,6 +112,10 @@ export function runToolCall(name: string, args: any, state: AgentState): string 
     case "list_characters": {
       const cs = listCharacters();
       return cs.length ? cs.map((c) => `${c.id} — ${c.name}`).join("\n") : "none";
+    }
+    case "list_locations": {
+      const ls = listLocations();
+      return ls.length ? ls.map((l) => `${l.id} — ${l.name}`).join("\n") : "none";
     }
     case "set_project":
       state.title = String(args?.title ?? state.title);

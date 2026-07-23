@@ -19,6 +19,7 @@ import {
   removeCharacter,
   getCharacter,
 } from "./soul.js";
+import { listLocations, getLocation, upsertLocation, removeLocation, locationPhrase } from "./locations.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const UI_DIR = join(HERE, "ui");
@@ -68,17 +69,28 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
     if (req.method === "GET" && p === "/api/models")
       return json(res, 200, { models: CATALOG, configured: configuredProviders() }), true;
     if (req.method === "GET" && p === "/api/characters") return json(res, 200, listCharacters()), true;
+    if (req.method === "GET" && p === "/api/locations") return json(res, 200, listLocations()), true;
 
     if (req.method === "POST" && p === "/api/compose") {
       const b = await readBody(req);
       const identity = b.character ? getCharacter(b.character) : undefined;
+      const loc = b.location ? getLocation(b.location) : undefined;
       const c = compose({
         subject: b.subject ?? "",
         presets: b.presets ?? [],
         cinema: b.cinema,
         identity: identity ? `${identity.name}, the same consistent character` : undefined,
+        setting: loc ? locationPhrase(loc) : undefined,
       });
       return json(res, 200, c), true;
+    }
+
+    if (req.method === "POST" && p === "/api/locations") {
+      const b = await readBody(req);
+      return json(res, 200, upsertLocation(b)), true;
+    }
+    if (req.method === "DELETE" && p === "/api/locations") {
+      return json(res, 200, { removed: removeLocation(url.searchParams.get("id") ?? "") }), true;
     }
 
     if (req.method === "POST" && p === "/api/characters") {

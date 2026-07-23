@@ -76,10 +76,11 @@ subject + presets ──▶ compose() ──▶ router ──▶ provider adapte
 - [x] Cinema Studio — camera body / lens / focal / aperture / shot / angle ([docs](docs/cinema-studio.md))
 - [x] Recipes — one-click template gallery ([docs](docs/recipes.md))
 - [x] Prompt composer with stacking + `{subject}` resolution
-- [x] Soul ID character consistency
+- [x] Prompt-first Studio: generation bar with Genre/Style/Camera/Character/Location pills, @-mentions, Image/Video, aspect/res/duration/batch/audio, hero + gallery
+- [x] Soul ID character consistency + Locations (consistent settings, `@`-mentioned)
 - [x] Operations: image start-frames, upscale, lipsync, video-to-video restyle ([docs](docs/operations.md))
 - [x] Video stitching (ffmpeg) for multi-shot exports
-- [x] Hermes-equivalent orchestrator (any OpenAI-compatible LLM)
+- [x] Director: the **real Nous Hermes 3** in a multi-tool agent loop ([docs](docs/orchestrator.md))
 - [x] MCP server
 - [x] Cross-platform app (local web + Electron for mac/win)
 - [ ] More provider adapters (direct Volcengine, ComfyUI recipes)

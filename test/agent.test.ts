@@ -8,7 +8,7 @@ function fresh(): AgentState {
 describe("agent tool dispatch", () => {
   it("exposes the expected tool suite", () => {
     const names = TOOLS.map((t) => t.function.name);
-    expect(names).toEqual(["search_presets", "list_cinema", "list_characters", "set_project", "add_shot", "finalize"]);
+    expect(names).toEqual(["search_presets", "list_cinema", "list_characters", "list_locations", "set_project", "add_shot", "finalize"]);
   });
 
   it("search_presets returns matches", () => {

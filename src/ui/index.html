@@ -211,8 +211,8 @@
         post: (p, b) => fetch(p, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b) }).then((r) => r.json()),
         del: (p) => fetch(p, { method: "DELETE" }).then((r) => r.json()),
       };
-      let PRESETS = [], MODELS = [], CONFIGURED = [], CINEMA = {}, RECIPES = [], SEL = new Set(), CINE = {}, APPLIED = null;
-      const TABS = ["Studio", "Recipes", "Presets", "Soul ID", "Director"];
+      let PRESETS = [], MODELS = [], CONFIGURED = [], CINEMA = {}, RECIPES = [], LOCATIONS = [], SEL = new Set(), CINE = {}, APPLIED = null;
+      const TABS = ["Studio", "Recipes", "Presets", "Soul ID", "Locations", "Director"];
       let tab = "Studio";
 
       function drawNav() {
@@ -245,7 +245,7 @@
       }
 
       // Studio state (prompt-first generation bar)
-      const ST = { genre: "", style: "", cam: {}, character: "", mode: "video", model: "seedance-2.0", aspect: "16:9", res: "1080p", dur: 8, batch: 1, audio: false };
+      const ST = { genre: "", style: "", cam: {}, character: "", location: "", mode: "video", model: "seedance-2.0", aspect: "16:9", res: "1080p", dur: 8, batch: 1, audio: false };
       let GAL = [];
       const labelOf = (group, id) => (CINEMA[group] || []).find((o) => o.id === id)?.label;
       const styleLabel = (id) => PRESETS.find((p) => p.id === id)?.label;
@@ -278,6 +278,7 @@
               ${pill("style", "✦", "Style", ST.style ? styleLabel(ST.style) : "Auto", !!ST.style)}
               ${pill("camera", "▣", "Camera", camSet ? "Custom" : "Auto", camSet)}
               ${pill("char", "◉", "Character", ST.character ? (chars.find((c) => c.id === ST.character)?.name || "—") : "None", !!ST.character)}
+              ${pill("loc", "⌖", "Location", ST.location ? (LOCATIONS.find((l) => l.id === ST.location)?.name || "—") : "Any", !!ST.location)}
             </div>
             <div class="prompt-wrap">
               <textarea id="prompt" placeholder="Describe your scene — use @ to add a character">${ST._seed || ""}</textarea>
@@ -306,6 +307,7 @@
           style: () => `<h4>Style / film look</h4><div class="opt-grid"><span class="opt ${!ST.style ? "on" : ""}" data-s="">Auto</span>${PRESETS.filter((p) => p.category === "style").map((p) => `<span class="opt ${ST.style === p.id ? "on" : ""}" data-s="${p.id}">${p.label}</span>`).join("")}</div>`,
           camera: () => `<h4>Cinema Studio</h4><div class="cam-grid">${["body", "lens", "focal", "aperture", "shot", "angle"].map((g) => `<div><label>${g}</label><select data-cam="${g}">${cineSelect(g, "—")}</select></div>`).join("")}</div>`,
           char: () => `<h4>Character · Soul ID</h4><div class="opt-grid"><span class="opt ${!ST.character ? "on" : ""}" data-c="">None</span>${chars.map((c) => `<span class="opt ${ST.character === c.id ? "on" : ""}" data-c="${c.id}">${c.name}</span>`).join("")}${chars.length ? "" : '<span class="muted" style="font-size:12px">add characters in the Soul ID tab</span>'}</div>`,
+          loc: () => `<h4>Location · setting</h4><div class="opt-grid"><span class="opt ${!ST.location ? "on" : ""}" data-l="">Any</span>${LOCATIONS.map((l) => `<span class="opt ${ST.location === l.id ? "on" : ""}" data-l="${l.id}">${l.name}</span>`).join("")}${LOCATIONS.length ? "" : '<span class="muted" style="font-size:12px">add locations in the Locations tab</span>'}</div>`,
         };
         $("#view").querySelectorAll(".gpill").forEach((b) => (b.onclick = (e) => {
           e.stopPropagation();
@@ -335,12 +337,16 @@
           const men = $("#mentions");
           if (!m) return void men.classList.add("hidden");
           const q = m[1].toLowerCase();
-          const hits = chars.filter((c) => c.name.toLowerCase().includes(q) || c.id.includes(q));
-          men.innerHTML = hits.length ? hits.map((c) => `<div data-ins="${c.id}" data-name="${c.name}">◉ ${c.name}</div>`).join("") : '<div class="none">no characters — add in Soul ID</div>';
+          const items = [
+            ...chars.map((c) => ({ ...c, kind: "char", ic: "◉" })),
+            ...LOCATIONS.map((l) => ({ ...l, kind: "loc", ic: "⌖" })),
+          ].filter((x) => x.name.toLowerCase().includes(q) || x.id.includes(q));
+          men.innerHTML = items.length ? items.map((x) => `<div data-ins="${x.id}" data-kind="${x.kind}" data-name="${x.name}">${x.ic} ${x.name}</div>`).join("") : '<div class="none">no characters or locations — add them in their tabs</div>';
           men.classList.remove("hidden");
           men.querySelectorAll("[data-ins]").forEach((d) => (d.onclick = () => {
             ta.value = ta.value.slice(0, ta.selectionStart).replace(/@\w*$/, "@" + d.dataset.name + " ") + ta.value.slice(ta.selectionStart);
-            ST.character = d.dataset.ins; men.classList.add("hidden"); studio();
+            if (d.dataset.kind === "char") ST.character = d.dataset.ins; else ST.location = d.dataset.ins;
+            men.classList.add("hidden"); studio();
           }));
         };
 
@@ -351,6 +357,7 @@
           if (key === "genre") pop.querySelectorAll("[data-g]").forEach((o) => (o.onclick = () => { ST.genre = o.dataset.g; studio(); }));
           if (key === "style") pop.querySelectorAll("[data-s]").forEach((o) => (o.onclick = () => { ST.style = o.dataset.s; studio(); }));
           if (key === "char") pop.querySelectorAll("[data-c]").forEach((o) => (o.onclick = () => { ST.character = o.dataset.c; studio(); }));
+          if (key === "loc") pop.querySelectorAll("[data-l]").forEach((o) => (o.onclick = () => { ST.location = o.dataset.l; studio(); }));
           if (key === "camera") pop.querySelectorAll("[data-cam]").forEach((s) => { s.value = ST.cam[s.dataset.cam] || ""; s.onchange = () => { if (s.value) ST.cam[s.dataset.cam] = s.value; else delete ST.cam[s.dataset.cam]; }; });
         }
       }
@@ -364,7 +371,7 @@
         const hero = $("#hero");
         hero.innerHTML = `<div class="hero-grid"></div><span class="hero-tag">rolling…</span><div class="ph"><div class="big" style="color:var(--amber)">◉ generating ${ST.batch} shot${ST.batch > 1 ? "s" : ""}</div></div>`;
         for (let i = 0; i < ST.batch; i++) {
-          const body = { subject: prompt, presets, cinema, character: ST.character || undefined, model, aspectRatio: ST.aspect, resolution: ST.res, durationSec: ST.dur, withAudio: ST.audio };
+          const body = { subject: prompt, presets, cinema, character: ST.character || undefined, location: ST.location || undefined, model, aspectRatio: ST.aspect, resolution: ST.res, durationSec: ST.dur, withAudio: ST.audio };
           const r = await api.post("/api/generate", body);
           const item = { prompt, model, ts: Date.now(), status: r.error ? "failed" : "queued", error: r.error, provider: r.provider, job: r.job?.id };
           GAL.unshift(item);
@@ -475,12 +482,36 @@
           render();
         }));
       }
-      function render() { drawNav(); ({ Studio: studio, Recipes: recipes, Presets: presets, "Soul ID": soul, Director: director }[tab])(); }
+      async function locations() {
+        LOCATIONS = await api.get("/api/locations");
+        view(`
+          <div class="panel">
+            <div class="eyebrow">Consistent settings</div>
+            <h2>Locations</h2>
+            <div class="sub">Save a place once, then @-mention it in any prompt to keep scenes in the same world.</div>
+            <div class="row">
+              <div><label>Handle</label><input id="lid" placeholder="mars-dune" /></div>
+              <div><label>Name</label><input id="lname" placeholder="The Red Dunes" /></div>
+            </div>
+            <label>Description</label>
+            <textarea id="ldesc" placeholder="an endless rust-red desert under a dusty pink sky, wind-carved dunes"></textarea>
+            <div class="actions"><button class="btn go" id="lsave">Save location</button></div>
+            <div class="out"><label>Saved</label><div class="grid2" id="llist">${LOCATIONS.length ? LOCATIONS.map((l) => `<div class="card"><b>${l.name}</b> <span class="chip" data-rm="${l.id}">remove</span><p>${l.description || ""}</p></div>`).join("") : '<span class="muted">none yet</span>'}</div></div>
+          </div>`);
+        $("#lsave").onclick = async () => {
+          if (!$("#lid").value.trim()) return;
+          await api.post("/api/locations", { id: $("#lid").value.trim(), name: $("#lname").value.trim() || $("#lid").value.trim(), description: $("#ldesc").value.trim() });
+          locations();
+        };
+        $("#llist").querySelectorAll("[data-rm]").forEach((b) => (b.onclick = async () => { await api.del(`/api/locations?id=${b.dataset.rm}`); locations(); }));
+      }
+      function render() { drawNav(); ({ Studio: studio, Recipes: recipes, Presets: presets, "Soul ID": soul, Locations: locations, Director: director }[tab])(); }
 
       (async () => {
         PRESETS = await api.get("/api/presets");
         CINEMA = await api.get("/api/cinema");
         RECIPES = await api.get("/api/recipes");
+        LOCATIONS = await api.get("/api/locations");
         const m = await api.get("/api/models");
         MODELS = m.models; CONFIGURED = m.configured;
         const st = $("#status");

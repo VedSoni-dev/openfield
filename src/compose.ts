@@ -12,6 +12,8 @@ export interface ComposeInput {
   presets?: string[];
   /** Soul ID identity phrase, woven in right after the subject. */
   identity?: string;
+  /** Location setting phrase, woven in after identity. */
+  setting?: string;
   /** Cinema Studio selection (camera body, lens, focal, aperture, shot). */
   cinema?: CinemaSelection;
 }
@@ -35,6 +37,7 @@ export function compose(input: ComposeInput): Composed {
   // resolved to a short back-reference so we don't repeat the full subject.
   const parts = [input.subject.trim()];
   if (input.identity) parts.push(input.identity.trim());
+  if (input.setting) parts.push(input.setting.trim());
   for (const p of used) {
     parts.push(p.template.replaceAll("{subject}", "the subject"));
   }

@@ -7,6 +7,7 @@ import { replicate } from "./providers/replicate.js";
 import { custom } from "./providers/custom.js";
 import { compose, type ComposeInput } from "./compose.js";
 import { getCharacter, identityPhrase } from "./soul.js";
+import { getLocation, locationPhrase } from "./locations.js";
 
 const PROVIDERS: Record<string, Provider> = {
   fal,
@@ -39,6 +40,8 @@ export interface GenerateOptions extends ComposeInput {
   resolution?: string;
   /** Soul ID character handle. Injects identity phrase + reference images. */
   character?: string;
+  /** Location handle. Injects the setting phrase. */
+  location?: string;
   extra?: Record<string, unknown>;
 }
 
@@ -66,8 +69,14 @@ export async function generate(opts: GenerateOptions): Promise<Dispatched> {
     identity = identityPhrase(c);
     references = c.refs;
   }
+  let setting = opts.setting;
+  if (opts.location) {
+    const l = getLocation(opts.location);
+    if (!l) throw new Error(`unknown location: ${opts.location}.`);
+    setting = locationPhrase(l);
+  }
 
-  const { prompt, params } = compose({ ...opts, identity });
+  const { prompt, params } = compose({ ...opts, identity, setting });
   const job = await provider.create({
     prompt,
     model: opts.model,

@@ -109,6 +109,7 @@ async function main() {
         model,
         cinema,
         character: flag("character"),
+        location: flag("location"),
         image: flag("image"),
         audio: flag("audio"),
         video: flag("video"),
@@ -187,6 +188,30 @@ async function main() {
       console.log("Ctrl+C to stop.");
       // keep process alive
       await new Promise(() => {});
+      break;
+    }
+
+    case "location":
+    case "loc": {
+      const { listLocations, getLocation, upsertLocation, removeLocation, locationPhrase } = await import("./locations.js");
+      const sub = args[1];
+      if (sub === "add") {
+        const id = args[2];
+        if (!id) return fail('need id: openfield location add <id> --name "..." --desc "..."');
+        const l = upsertLocation({ id, name: flag("name") ?? id, description: flag("desc") ?? "" });
+        console.log(`saved ${l.id}: ${l.name}`);
+        console.log(`phrase: ${locationPhrase(l)}`);
+      } else if (sub === "show") {
+        const l = getLocation(args[2] ?? "");
+        if (!l) return fail("not found");
+        console.log(JSON.stringify(l, null, 2));
+      } else if (sub === "rm") {
+        return console.log(removeLocation(args[2] ?? "") ? "removed" : "not found");
+      } else {
+        const ls = listLocations();
+        if (!ls.length) return console.log('no locations. add: openfield location add mars --name "Mars" --desc "..."');
+        for (const l of ls) console.log(`  ${l.id.padEnd(14)} ${l.name}`);
+      }
       break;
     }
 
