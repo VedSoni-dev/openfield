@@ -66,6 +66,37 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
     if (req.method === "GET" && p === "/api/presets") return json(res, 200, PRESETS), true;
     if (req.method === "GET" && p === "/api/cinema") return json(res, 200, CINEMA_GROUPS), true;
     if (req.method === "GET" && p === "/api/recipes") return json(res, 200, RECIPES), true;
+
+    // --- Projects & Elements (Cinema Studio workflow) ---
+    if (p.startsWith("/api/projects") || p.startsWith("/api/elements")) {
+      const proj = await import("./projects.js");
+      const el = await import("./elements.js");
+      const pid = url.searchParams.get("project") ?? "";
+      if (req.method === "GET" && p === "/api/projects") return json(res, 200, proj.listProjects()), true;
+      if (req.method === "POST" && p === "/api/projects") {
+        const b = await readBody(req);
+        return json(res, 200, proj.createProject({ name: b.name, aspectRatio: b.aspect, targetRuntimeS: b.runtime, createdAt: new Date().toISOString() })), true;
+      }
+      if (req.method === "DELETE" && p === "/api/projects") return json(res, 200, { removed: proj.removeProject(pid) }), true;
+      if (req.method === "GET" && p === "/api/elements") return json(res, 200, el.listElements(pid)), true;
+      if (req.method === "POST" && p === "/api/elements") {
+        const b = await readBody(req);
+        return json(res, 200, el.upsertElement(pid, b)), true;
+      }
+      if (req.method === "POST" && p === "/api/elements/version") {
+        const b = await readBody(req); // { handle, dataUri, ext }
+        const base64 = String(b.dataUri).replace(/^data:[^;]+;base64,/, "");
+        return json(res, 200, el.addVersion(pid, b.handle, Buffer.from(base64, "base64"), { ext: b.ext ?? "png", source: "uploaded" })), true;
+      }
+      if (req.method === "POST" && p === "/api/elements/lock") {
+        const b = await readBody(req);
+        return json(res, 200, el.lockElement(pid, b.handle)), true;
+      }
+      if (req.method === "POST" && p === "/api/elements/variant") {
+        const b = await readBody(req);
+        return json(res, 200, el.forkVariant(pid, b.parent, b.handle, b.desc)), true;
+      }
+    }
     if (req.method === "GET" && p === "/api/models")
       return json(res, 200, { models: CATALOG, configured: configuredProviders() }), true;
     if (req.method === "GET" && p === "/api/characters") return json(res, 200, listCharacters()), true;

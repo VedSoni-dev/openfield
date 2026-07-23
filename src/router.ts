@@ -9,6 +9,7 @@ import { compose, type ComposeInput } from "./compose.js";
 import { getCharacter, identityPhrase } from "./soul.js";
 import { getLocation, locationPhrase } from "./locations.js";
 import { orderAndCap, resolveRefUrl, referenceLegend, type Ref } from "./refs.js";
+import { resolveHandles, elementsToRefs } from "./elements.js";
 
 const PROVIDERS: Record<string, Provider> = {
   fal,
@@ -45,6 +46,8 @@ export interface GenerateOptions extends ComposeInput {
   location?: string;
   /** Extra reference images to attach (elements, schematic, first-frame). */
   refs?: Ref[];
+  /** Project id — @handles in the subject resolve to locked element refs. */
+  project?: string;
   extra?: Record<string, unknown>;
 }
 
@@ -78,6 +81,10 @@ export async function generate(opts: GenerateOptions): Promise<Dispatched> {
     if (!l) throw new Error(`unknown location: ${opts.location}.`);
     setting = locationPhrase(l);
     for (const src of l.refs ?? []) refObjs.push({ handle: l.id, role: "location", src });
+  }
+  // Project elements: resolve @handles in the subject to locked element refs.
+  if (opts.project) {
+    for (const r of elementsToRefs(resolveHandles(opts.project, opts.subject))) refObjs.push(r);
   }
   // Explicit refs passed by the caller (elements, schematics, first-frame).
   for (const r of opts.refs ?? []) refObjs.push(r);

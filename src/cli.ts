@@ -110,6 +110,7 @@ async function main() {
         cinema,
         character: flag("character"),
         location: flag("location"),
+        project: flag("project"),
         image: flag("image"),
         audio: flag("audio"),
         video: flag("video"),
@@ -188,6 +189,69 @@ async function main() {
       console.log("Ctrl+C to stop.");
       // keep process alive
       await new Promise(() => {});
+      break;
+    }
+
+    case "project":
+    case "proj": {
+      const proj = await import("./projects.js");
+      const sub = args[1];
+      if (sub === "new") {
+        const name = flag("name") ?? args[2];
+        if (!name) return fail('need a name: openfield project new "Headphones Spot"');
+        const p = proj.createProject({
+          name,
+          aspectRatio: flag("aspect"),
+          targetRuntimeS: flag("runtime") ? Number(flag("runtime")) : undefined,
+          createdAt: new Date().toISOString(),
+        });
+        console.log(`created project ${p.id} — ${p.name} (${p.aspectRatio}, ${p.targetRuntimeS}s)`);
+      } else if (sub === "rm") {
+        return console.log(proj.removeProject(args[2] ?? "") ? "removed" : "not found");
+      } else {
+        const ps = proj.listProjects();
+        if (!ps.length) return console.log('no projects. new: openfield project new "My Spot"');
+        for (const p of ps) console.log(`  ${p.id.padEnd(24)} ${p.name} (${p.aspectRatio}, ${p.targetRuntimeS}s)`);
+      }
+      break;
+    }
+
+    case "element":
+    case "el": {
+      const el = await import("./elements.js");
+      const sub = args[1];
+      const pid = args[2];
+      if (sub === "add") {
+        const handle = args[3];
+        if (!pid || !handle) return fail("usage: openfield element add <projectId> <handle> --type character --desc \"...\"");
+        const e = el.upsertElement(pid, {
+          handle,
+          type: (flag("type") ?? "prop") as any,
+          displayName: flag("name"),
+          description: flag("desc"),
+          aliases: flag("alias") ? [flag("alias")!] : undefined,
+          parentHandle: flag("parent"),
+        });
+        console.log(`@${e.handle} [${e.type}] added to ${pid}`);
+      } else if (sub === "ver") {
+        const handle = args[3];
+        const file = flag("file");
+        if (!pid || !handle || !file) return fail("usage: openfield element ver <projectId> <handle> --file <path>");
+        const { readFileSync } = await import("node:fs");
+        const v = el.addVersion(pid, handle, readFileSync(file), { ext: el.extFromName(file), source: "uploaded" });
+        console.log(`@${handle} v${v.versionNo} <- ${file}`);
+      } else if (sub === "lock") {
+        const e = el.lockElement(pid, args[3] ?? "");
+        console.log(`@${e.handle} locked (v${e.currentVersion})`);
+      } else if (sub === "variant") {
+        const e = el.forkVariant(pid, args[3] ?? "", args[4] ?? "", flag("desc"));
+        console.log(`@${e.handle} forked from @${e.parentHandle}`);
+      } else {
+        if (!pid) return fail("usage: openfield element list <projectId>");
+        const es = el.listElements(pid);
+        if (!es.length) return console.log("no elements. add: openfield element add <projectId> <handle> --type character");
+        for (const e of es) console.log(`  @${e.handle.padEnd(16)} [${e.type}] ${e.status}${e.currentVersion ? " v" + e.currentVersion : ""} — ${e.description || ""}`);
+      }
       break;
     }
 
