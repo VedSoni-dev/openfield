@@ -127,6 +127,71 @@
       details { border: 1px solid var(--line); border-radius: 9px; padding: 0 14px; margin-top: 6px; background: var(--ink-2); }
       summary { cursor: pointer; padding: 12px 0; font-family: var(--mono); font-size: 12px; letter-spacing: 0.05em; color: var(--teal); }
       details[open] { padding-bottom: 14px; }
+
+      /* ===== generation bar (prompt-first Studio) ===== */
+      .hero-preview { position: relative; height: 300px; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: radial-gradient(130% 130% at 30% 10%, #1a1e24, #0b0d10); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+      .hero-preview .ph { text-align: center; color: var(--dim2); }
+      .hero-preview .ph .big { font-family: var(--serif); font-size: 26px; color: var(--dim); margin-bottom: 6px; }
+      .hero-preview video, .hero-preview img { width: 100%; height: 100%; object-fit: cover; }
+      .hero-grid { position: absolute; inset: 0; background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 20% 20%; opacity: 0.12; pointer-events: none; }
+      .hero-tag { position: absolute; left: 16px; top: 14px; font-family: var(--mono); font-size: 11px; color: var(--dim); letter-spacing: 0.08em; z-index: 2; }
+
+      .genbar { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 14px; position: relative; box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+      .pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+      .gpill { display: inline-flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 12px; color: var(--dim); background: var(--ink-2); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; cursor: pointer; transition: all .15s; }
+      .gpill:hover { border-color: var(--line-2); color: var(--paper); }
+      .gpill.set { border-color: color-mix(in srgb, var(--amber) 55%, var(--line)); color: var(--paper); }
+      .gpill b { color: var(--amber); font-weight: 500; }
+      .gpill .ic { color: var(--teal); }
+
+      .prompt-wrap { position: relative; display: flex; gap: 12px; align-items: flex-end; }
+      #prompt { flex: 1; min-height: 76px; background: transparent; border: none; color: var(--paper); font-family: var(--sans); font-size: 17px; line-height: 1.5; padding: 6px 4px; resize: none; }
+      #prompt:focus { outline: none; }
+      #prompt::placeholder { color: var(--dim2); }
+      .genbtn { flex-shrink: 0; display: inline-flex; align-items: center; gap: 9px; background: var(--amber); color: #1a0f06; border: none; font-family: var(--mono); font-weight: 600; font-size: 14px; padding: 13px 22px; border-radius: 10px; cursor: pointer; transition: all .15s; }
+      .genbtn:hover { background: var(--amber-soft); transform: translateY(-1px); box-shadow: 0 6px 20px color-mix(in srgb, var(--amber) 30%, transparent); }
+      .genbtn .tri { width: 0; height: 0; border-left: 9px solid #1a0f06; border-top: 6px solid transparent; border-bottom: 6px solid transparent; }
+
+      .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+      .controls select { width: auto; background: var(--ink-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-family: var(--mono); font-size: 12px; color: var(--paper); }
+      .seg { display: inline-flex; background: var(--ink-2); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+      .seg button { background: transparent; border: none; color: var(--dim); font-family: var(--mono); font-size: 12px; padding: 8px 13px; cursor: pointer; }
+      .seg button.on { background: var(--panel-2); color: var(--amber); }
+      .stepper { display: inline-flex; align-items: center; background: var(--ink-2); border: 1px solid var(--line); border-radius: 8px; font-family: var(--mono); font-size: 12px; }
+      .stepper button { background: transparent; border: none; color: var(--dim); padding: 8px 11px; cursor: pointer; }
+      .stepper span { color: var(--paper); min-width: 40px; text-align: center; }
+      .toggle { background: var(--ink-2); border: 1px solid var(--line); border-radius: 8px; color: var(--dim); font-family: var(--mono); font-size: 12px; padding: 8px 13px; cursor: pointer; }
+      .toggle.on { border-color: var(--teal); color: var(--teal); }
+      .ctrl-lbl { font-family: var(--mono); font-size: 10px; color: var(--dim2); text-transform: uppercase; letter-spacing: 0.1em; margin-right: -2px; }
+
+      /* popovers */
+      .popover { position: absolute; z-index: 40; background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 12px; padding: 14px; box-shadow: 0 16px 50px rgba(0,0,0,0.6); min-width: 240px; max-width: 440px; }
+      .popover.hidden { display: none; }
+      .popover h4 { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal); margin: 0 0 10px; }
+      .opt-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+      .opt { font-family: var(--mono); font-size: 12px; padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--ink-2); color: var(--dim); cursor: pointer; }
+      .opt:hover { color: var(--paper); border-color: var(--line-2); }
+      .opt.on { border-color: var(--amber); color: var(--amber); }
+      .cam-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .cam-grid label { margin: 0 0 4px; }
+      .cam-grid select { width: 100%; }
+
+      /* @mentions */
+      .mentions { position: absolute; bottom: 84px; left: 8px; z-index: 45; background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 10px; padding: 6px; min-width: 200px; box-shadow: 0 12px 40px rgba(0,0,0,0.5); }
+      .mentions.hidden { display: none; }
+      .mentions div { font-family: var(--mono); font-size: 12px; padding: 7px 10px; border-radius: 6px; cursor: pointer; color: var(--paper); }
+      .mentions div:hover { background: var(--ink-2); }
+      .mentions .none { color: var(--dim2); cursor: default; }
+
+      /* gallery */
+      .gallery { margin-top: 22px; }
+      .gallery h3 { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); margin: 0 0 12px; }
+      .gcards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      @media (max-width: 640px){ .gcards { grid-template-columns: 1fr; } }
+      .gcard { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+      .gcard .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+      .gcard p { margin: 0; font-size: 13px; color: var(--paper); }
+      .gcard .meta { font-family: var(--mono); font-size: 11px; color: var(--dim); margin-top: 8px; }
     </style>
   </head>
   <body>
@@ -179,63 +244,156 @@
         return Object.keys(CINE).length ? CINE : undefined;
       }
 
+      // Studio state (prompt-first generation bar)
+      const ST = { genre: "", style: "", cam: {}, character: "", mode: "video", model: "seedance-2.0", aspect: "16:9", res: "1080p", dur: 8, batch: 1, audio: false };
+      let GAL = [];
+      const labelOf = (group, id) => (CINEMA[group] || []).find((o) => o.id === id)?.label;
+      const styleLabel = (id) => PRESETS.find((p) => p.id === id)?.label;
+
       async function studio() {
-        view(`
-          <div class="panel">
-            <div class="eyebrow">Compose · Generate</div>
-            <h2>Studio</h2>
-            <div class="sub">Subject, optics, presets, character — stacked into one prompt, sent to your model.</div>
-            <label>Subject</label>
-            <textarea id="subj" placeholder="a lone astronaut walking across a red dune at dusk"></textarea>
-            <div class="row">
-              <div><label>Model</label><select id="model">${modelOpts()}</select></div>
-              <div><label>Character · Soul ID</label><select id="char"><option value="">none</option></select></div>
-            </div>
-            <details>
-              <summary>◎ Cinema Studio — camera body · lens · focal · aperture · shot</summary>
-              <div class="cine">
-                <div><label>Body</label><select id="c_body">${cineSelect("body", "—")}</select></div>
-                <div><label>Lens</label><select id="c_lens">${cineSelect("lens", "—")}</select></div>
-                <div><label>Focal</label><select id="c_focal">${cineSelect("focal", "—")}</select></div>
-                <div><label>Aperture</label><select id="c_aperture">${cineSelect("aperture", "—")}</select></div>
-                <div><label>Shot</label><select id="c_shot">${cineSelect("shot", "—")}</select></div>
-                <div><label>Angle</label><select id="c_angle">${cineSelect("angle", "—")}</select></div>
-              </div>
-            </details>
-            <label>Presets</label>
-            <div id="picker">${presetPicker()}</div>
-            <div class="actions">
-              <button class="btn" id="prev">Preview prompt</button>
-              <button class="btn go" id="gen">▶ Generate</button>
-            </div>
-            <div class="out" id="out"></div>
-          </div>`);
-        wireChips($("#picker"));
-        // apply a recipe's model / cinema / subject if one was just picked
+        // recipe apply → seed ST
         if (APPLIED) {
-          if (APPLIED.subjectHint) $("#subj").value = APPLIED.subjectHint;
-          if (APPLIED.model) $("#model").value = APPLIED.model;
-          for (const [g, v] of Object.entries(APPLIED.cinema || {})) { const el = $("#c_" + g); if (el) el.value = v; }
-          if (APPLIED.cinema && Object.keys(APPLIED.cinema).length) $("details").open = true;
+          if (APPLIED.model) ST.model = APPLIED.model;
+          if (APPLIED.subjectHint) ST._seed = APPLIED.subjectHint;
+          ST.cam = {}; ST.genre = ""; ST.style = "";
+          for (const [g, v] of Object.entries(APPLIED.cinema || {})) { if (g === "genre") ST.genre = v; else ST.cam[g] = v; }
+          const styleP = (APPLIED.presets || []).find((p) => PRESETS.find((x) => x.id === p && x.category === "style"));
+          if (styleP) ST.style = styleP;
+          SEL = new Set(APPLIED.presets || []);
           APPLIED = null;
         }
         const chars = await api.get("/api/characters");
-        $("#char").innerHTML = `<option value="">none</option>` + chars.map((c) => `<option value="${c.id}">${c.name}</option>`).join("");
-        $("#prev").onclick = async () => {
-          const c = await api.post("/api/compose", { subject: $("#subj").value, presets: [...SEL], character: $("#char").value || undefined, cinema: readCine() });
-          $("#out").innerHTML = `<label>Composed prompt</label><pre>${c.prompt || "(empty)"}</pre>` + (Object.keys(c.params || {}).length ? `<label>Params</label><pre>${JSON.stringify(c.params, null, 2)}</pre>` : "");
+        const camSet = Object.keys(ST.cam).length > 0;
+        const pill = (id, ic, name, val, set) => `<button class="gpill ${set ? "set" : ""}" data-pop="${id}"><span class="ic">${ic}</span> ${name}: <b>${val}</b></button>`;
+        view(`
+          <div class="hero-preview frame" id="hero">
+            <div class="hero-grid"></div>
+            <span class="brackets"><span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span></span>
+            <span class="hero-tag">openfield · cinema studio</span>
+            <div class="ph"><div class="big">Direct anything you imagine</div><div class="mono" style="font-size:12px">describe a scene below · pick your look · generate</div></div>
+          </div>
+          <div class="genbar">
+            <div class="pills">
+              ${pill("genre", "◆", "Genre", ST.genre ? labelOf("genre", ST.genre) : "General", !!ST.genre)}
+              ${pill("style", "✦", "Style", ST.style ? styleLabel(ST.style) : "Auto", !!ST.style)}
+              ${pill("camera", "▣", "Camera", camSet ? "Custom" : "Auto", camSet)}
+              ${pill("char", "◉", "Character", ST.character ? (chars.find((c) => c.id === ST.character)?.name || "—") : "None", !!ST.character)}
+            </div>
+            <div class="prompt-wrap">
+              <textarea id="prompt" placeholder="Describe your scene — use @ to add a character">${ST._seed || ""}</textarea>
+              <div class="mentions hidden" id="mentions"></div>
+              <button class="genbtn" id="gen"><span class="tri"></span> Generate</button>
+            </div>
+            <div class="controls">
+              <div class="seg" id="mode"><button data-m="image" class="${ST.mode === "image" ? "on" : ""}">Image</button><button data-m="video" class="${ST.mode === "video" ? "on" : ""}">Video</button></div>
+              <span class="ctrl-lbl">model</span><select id="model">${modelOpts()}</select>
+              <select id="aspect">${["16:9", "9:16", "1:1", "2.39:1", "4:5"].map((a) => `<option ${a === ST.aspect ? "selected" : ""}>${a}</option>`).join("")}</select>
+              <select id="res">${["720p", "1080p", "4k"].map((r) => `<option ${r === ST.res ? "selected" : ""}>${r}</option>`).join("")}</select>
+              <select id="dur">${[4, 6, 8, 10].map((d) => `<option ${d === ST.dur ? "selected" : ""} value="${d}">${d}s</option>`).join("")}</select>
+              <div class="stepper"><button id="bminus">–</button><span id="batchn">${ST.batch}</span><button id="bplus">+</button></div>
+              <button class="toggle ${ST.audio ? "on" : ""}" id="audio">♪ Audio ${ST.audio ? "on" : "off"}</button>
+            </div>
+            <div class="popover hidden" id="pop"></div>
+          </div>
+          <div class="gallery" id="gallery"></div>`);
+        $("#model").value = ST.model;
+        delete ST._seed;
+        renderGallery();
+
+        // pills → popover
+        const POPS = {
+          genre: () => `<h4>Genre</h4><div class="opt-grid">${(CINEMA.genre || []).map((o) => `<span class="opt ${ST.genre === o.id ? "on" : ""}" data-g="${o.id}">${o.label}</span>`).join("")}</div>`,
+          style: () => `<h4>Style / film look</h4><div class="opt-grid"><span class="opt ${!ST.style ? "on" : ""}" data-s="">Auto</span>${PRESETS.filter((p) => p.category === "style").map((p) => `<span class="opt ${ST.style === p.id ? "on" : ""}" data-s="${p.id}">${p.label}</span>`).join("")}</div>`,
+          camera: () => `<h4>Cinema Studio</h4><div class="cam-grid">${["body", "lens", "focal", "aperture", "shot", "angle"].map((g) => `<div><label>${g}</label><select data-cam="${g}">${cineSelect(g, "—")}</select></div>`).join("")}</div>`,
+          char: () => `<h4>Character · Soul ID</h4><div class="opt-grid"><span class="opt ${!ST.character ? "on" : ""}" data-c="">None</span>${chars.map((c) => `<span class="opt ${ST.character === c.id ? "on" : ""}" data-c="${c.id}">${c.name}</span>`).join("")}${chars.length ? "" : '<span class="muted" style="font-size:12px">add characters in the Soul ID tab</span>'}</div>`,
         };
-        $("#gen").onclick = async () => {
-          $("#out").innerHTML = `<span class="muted">rolling…</span>`;
-          const r = await api.post("/api/generate", { subject: $("#subj").value, presets: [...SEL], model: $("#model").value, character: $("#char").value || undefined, cinema: readCine() });
-          if (r.error) return void ($("#out").innerHTML = `<span class="pill err">${r.error}</span>`);
-          $("#out").innerHTML = `<span class="pill ok">queued · ${r.provider}</span><pre>${r.prompt}</pre><div class="muted">job ${r.job.id}</div><div class="actions"><button class="btn" id="poll">Check status</button></div><div id="st"></div>`;
-          $("#poll").onclick = async () => {
-            $("#st").innerHTML = `<span class="muted">checking…</span>`;
-            const s = await api.get(`/api/status?provider=${encodeURIComponent(r.provider)}&job=${encodeURIComponent(r.job.id)}`);
-            $("#st").innerHTML = `<div class="out"><span class="pill ${s.status === "succeeded" ? "ok" : s.status === "failed" ? "err" : ""}">${s.status}</span>` + (s.output?.length ? s.output.map((u) => `<div style="margin-top:8px"><a href="${u}" target="_blank">${u}</a></div>`).join("") : "") + `</div>`;
-          };
+        $("#view").querySelectorAll(".gpill").forEach((b) => (b.onclick = (e) => {
+          e.stopPropagation();
+          const pop = $("#pop"), key = b.dataset.pop;
+          if (!pop.classList.contains("hidden") && pop.dataset.key === key) { pop.classList.add("hidden"); return; }
+          pop.dataset.key = key; pop.innerHTML = POPS[key]();
+          pop.style.left = Math.min(b.offsetLeft, 40) + "px"; pop.style.top = "62px";
+          pop.classList.remove("hidden");
+          wirePop(key);
+        }));
+        document.addEventListener("click", () => $("#pop")?.classList.add("hidden"), { once: true });
+
+        // controls
+        $("#mode").querySelectorAll("button").forEach((b) => (b.onclick = () => { ST.mode = b.dataset.m; studio(); }));
+        $("#model").onchange = (e) => (ST.model = e.target.value);
+        $("#aspect").onchange = (e) => (ST.aspect = e.target.value);
+        $("#res").onchange = (e) => (ST.res = e.target.value);
+        $("#dur").onchange = (e) => (ST.dur = Number(e.target.value));
+        $("#bminus").onclick = () => { ST.batch = Math.max(1, ST.batch - 1); $("#batchn").textContent = ST.batch; };
+        $("#bplus").onclick = () => { ST.batch = Math.min(4, ST.batch + 1); $("#batchn").textContent = ST.batch; };
+        $("#audio").onclick = () => { ST.audio = !ST.audio; $("#audio").className = "toggle " + (ST.audio ? "on" : ""); $("#audio").textContent = "♪ Audio " + (ST.audio ? "on" : "off"); };
+
+        // @mentions
+        const ta = $("#prompt");
+        ta.oninput = () => {
+          const m = ta.value.slice(0, ta.selectionStart).match(/@(\w*)$/);
+          const men = $("#mentions");
+          if (!m) return void men.classList.add("hidden");
+          const q = m[1].toLowerCase();
+          const hits = chars.filter((c) => c.name.toLowerCase().includes(q) || c.id.includes(q));
+          men.innerHTML = hits.length ? hits.map((c) => `<div data-ins="${c.id}" data-name="${c.name}">◉ ${c.name}</div>`).join("") : '<div class="none">no characters — add in Soul ID</div>';
+          men.classList.remove("hidden");
+          men.querySelectorAll("[data-ins]").forEach((d) => (d.onclick = () => {
+            ta.value = ta.value.slice(0, ta.selectionStart).replace(/@\w*$/, "@" + d.dataset.name + " ") + ta.value.slice(ta.selectionStart);
+            ST.character = d.dataset.ins; men.classList.add("hidden"); studio();
+          }));
         };
+
+        $("#gen").onclick = () => runGenerate(ta.value, chars);
+        function wirePop(key) {
+          const pop = $("#pop");
+          pop.onclick = (e) => e.stopPropagation();
+          if (key === "genre") pop.querySelectorAll("[data-g]").forEach((o) => (o.onclick = () => { ST.genre = o.dataset.g; studio(); }));
+          if (key === "style") pop.querySelectorAll("[data-s]").forEach((o) => (o.onclick = () => { ST.style = o.dataset.s; studio(); }));
+          if (key === "char") pop.querySelectorAll("[data-c]").forEach((o) => (o.onclick = () => { ST.character = o.dataset.c; studio(); }));
+          if (key === "camera") pop.querySelectorAll("[data-cam]").forEach((s) => { s.value = ST.cam[s.dataset.cam] || ""; s.onchange = () => { if (s.value) ST.cam[s.dataset.cam] = s.value; else delete ST.cam[s.dataset.cam]; }; });
+        }
+      }
+
+      async function runGenerate(prompt, chars) {
+        if (!prompt.trim()) { $("#hero").querySelector(".ph .big").textContent = "Describe a scene first"; return; }
+        const cinema = { ...ST.cam };
+        if (ST.genre) cinema.genre = ST.genre;
+        const presets = ST.style ? [ST.style] : [];
+        const model = ST.mode === "image" ? "image" : ST.model;
+        const hero = $("#hero");
+        hero.innerHTML = `<div class="hero-grid"></div><span class="hero-tag">rolling…</span><div class="ph"><div class="big" style="color:var(--amber)">◉ generating ${ST.batch} shot${ST.batch > 1 ? "s" : ""}</div></div>`;
+        for (let i = 0; i < ST.batch; i++) {
+          const body = { subject: prompt, presets, cinema, character: ST.character || undefined, model, aspectRatio: ST.aspect, resolution: ST.res, durationSec: ST.dur, withAudio: ST.audio };
+          const r = await api.post("/api/generate", body);
+          const item = { prompt, model, ts: Date.now(), status: r.error ? "failed" : "queued", error: r.error, provider: r.provider, job: r.job?.id };
+          GAL.unshift(item);
+          if (!r.error && r.job) pollInto(item);
+        }
+        hero.querySelector(".hero-tag").textContent = "openfield · cinema studio";
+        hero.querySelector(".ph .big").textContent = "Generating — see the gallery below";
+        renderGallery();
+      }
+      async function pollInto(item) {
+        for (let n = 0; n < 60; n++) {
+          await new Promise((r) => setTimeout(r, 3000));
+          const s = await api.get(`/api/status?provider=${encodeURIComponent(item.provider)}&job=${encodeURIComponent(item.job)}`).catch(() => null);
+          if (!s) continue;
+          item.status = s.status; item.output = s.output;
+          renderGallery();
+          if (s.status === "succeeded") { const h = $("#hero"); if (h && s.output?.[0]) h.innerHTML = `<video src="${s.output[0]}" autoplay loop muted playsinline></video><span class="hero-tag">latest render</span>`; break; }
+          if (s.status === "failed") break;
+        }
+      }
+      function renderGallery() {
+        const g = $("#gallery"); if (!g) return;
+        if (!GAL.length) { g.innerHTML = ""; return; }
+        g.innerHTML = `<h3>This session · ${GAL.length} generation${GAL.length > 1 ? "s" : ""}</h3><div class="gcards">${GAL.map((it) => `
+          <div class="gcard">
+            <div class="top"><span class="pill ${it.status === "succeeded" ? "ok" : it.status === "failed" ? "err" : ""}">${it.status}</span><span class="mono" style="font-size:11px;color:var(--dim)">${it.model}</span></div>
+            <p>${it.prompt.slice(0, 120)}${it.prompt.length > 120 ? "…" : ""}</p>
+            ${it.output?.length ? it.output.map((u) => `<div class="meta"><a href="${u}" target="_blank">▶ open output</a></div>`).join("") : it.error ? `<div class="meta" style="color:var(--err)">${it.error}</div>` : `<div class="meta">${it.provider ? "job " + it.job : ""}</div>`}
+          </div>`).join("")}</div>`;
       }
 
       let presetCat = "all";

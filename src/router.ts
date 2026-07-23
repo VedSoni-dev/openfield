@@ -33,6 +33,7 @@ export interface GenerateOptions extends ComposeInput {
   image?: string;
   audio?: string;
   video?: string;
+  withAudio?: boolean;
   durationSec?: number;
   aspectRatio?: string;
   resolution?: string;
@@ -75,6 +76,7 @@ export async function generate(opts: GenerateOptions): Promise<Dispatched> {
     references,
     audio: opts.audio,
     video: opts.video,
+    withAudio: opts.withAudio,
     durationSec: opts.durationSec,
     aspectRatio: opts.aspectRatio,
     resolution: opts.resolution,

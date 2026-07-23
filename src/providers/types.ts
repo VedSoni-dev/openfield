@@ -16,6 +16,8 @@ export interface GenerateParams {
   references?: string[];
   /** Audio url (lipsync / speak). */
   audio?: string;
+  /** Toggle native audio generation (models that support it). */
+  withAudio?: boolean;
   /** Source video url (upscale / video-to-video / extend). */
   video?: string;
   durationSec?: number;

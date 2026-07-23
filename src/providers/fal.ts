@@ -27,6 +27,7 @@ export const fal: Provider = {
       ...(params.references?.length ? { reference_image_urls: params.references } : {}),
       ...(params.audio ? { audio_url: params.audio } : {}),
       ...(params.video ? { video_url: params.video } : {}),
+      ...(params.withAudio ? { generate_audio: true } : {}),
       ...(params.durationSec ? { duration: String(params.durationSec) } : {}),
       ...(params.aspectRatio ? { aspect_ratio: params.aspectRatio } : {}),
       ...(params.resolution ? { resolution: params.resolution } : {}),

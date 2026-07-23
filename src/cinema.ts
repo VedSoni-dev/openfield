@@ -69,6 +69,19 @@ export const SHOT_SIZES: CinemaOption[] = [
   { id: "extreme-wide", label: "Extreme Wide", phrase: "extreme wide shot, subject small in a vast environment" },
 ];
 
+export const GENRES: CinemaOption[] = [
+  { id: "general", label: "General", phrase: "" },
+  { id: "action", label: "Action", phrase: "high-octane action cinematography, kinetic energy, dynamic movement" },
+  { id: "horror", label: "Horror", phrase: "horror film aesthetic, dread and tension, shadowy unease" },
+  { id: "romance", label: "Romance", phrase: "romantic cinematic mood, warm intimate tenderness, soft focus" },
+  { id: "scifi", label: "Sci-Fi", phrase: "science-fiction aesthetic, sleek futuristic technology, otherworldly" },
+  { id: "fantasy", label: "Fantasy", phrase: "epic fantasy cinematography, magical and majestic, mythic scale" },
+  { id: "noir", label: "Noir", phrase: "film-noir aesthetic, high-contrast shadows, moody mystery" },
+  { id: "documentary", label: "Documentary", phrase: "documentary realism, observational handheld authenticity" },
+  { id: "comedy", label: "Comedy", phrase: "bright playful comedic tone, lively and warm" },
+  { id: "thriller", label: "Thriller", phrase: "taut thriller atmosphere, suspenseful tension, cold precision" },
+];
+
 export const ANGLES: CinemaOption[] = [
   { id: "eye-level", label: "Eye Level", phrase: "eye-level angle, neutral natural perspective" },
   { id: "low", label: "Low Angle", phrase: "low camera angle looking up, imposing and powerful" },
@@ -79,6 +92,7 @@ export const ANGLES: CinemaOption[] = [
 ];
 
 export const CINEMA_GROUPS = {
+  genre: GENRES,
   body: CAMERA_BODIES,
   lens: LENSES,
   focal: FOCAL_LENGTHS,
@@ -90,6 +104,7 @@ export const CINEMA_GROUPS = {
 export type CinemaGroup = keyof typeof CINEMA_GROUPS;
 
 export interface CinemaSelection {
+  genre?: string;
   body?: string;
   lens?: string;
   focal?: string;
@@ -105,7 +120,7 @@ function opt(group: CinemaGroup, id?: string): CinemaOption | undefined {
 
 /** Build a prompt fragment + merged params from a Cinema Studio selection. */
 export function cinemaFragment(sel: CinemaSelection): { phrase: string; params: Record<string, unknown> } {
-  const order: CinemaGroup[] = ["shot", "angle", "focal", "aperture", "lens", "body"];
+  const order: CinemaGroup[] = ["genre", "shot", "angle", "focal", "aperture", "lens", "body"];
   const chosen = order.map((g) => opt(g, sel[g])).filter(Boolean) as CinemaOption[];
   const params: Record<string, unknown> = {};
   for (const c of chosen) Object.assign(params, c.params ?? {});
