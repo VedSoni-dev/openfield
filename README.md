@@ -67,14 +67,17 @@ subject + presets ──▶ compose() ──▶ router ──▶ provider adapte
 
 ## Feature status
 
-- [x] BYOK provider router (fal, Replicate, self-host) + 7-model catalog
-- [x] 47+ preset library across 5 categories
+- [x] BYOK provider router (fal, Replicate, self-host) + 11-model catalog
+- [x] 61 presets across 7 categories (camera, lens, lighting, style, vfx, mood, transition)
+- [x] Cinema Studio — camera body / lens / focal / aperture / shot / angle ([docs](docs/cinema-studio.md))
+- [x] Recipes — one-click template gallery ([docs](docs/recipes.md))
 - [x] Prompt composer with stacking + `{subject}` resolution
 - [x] Soul ID character consistency
+- [x] Operations: image start-frames, upscale, lipsync, video-to-video restyle ([docs](docs/operations.md))
+- [x] Video stitching (ffmpeg) for multi-shot exports
 - [x] Hermes-equivalent orchestrator (any OpenAI-compatible LLM)
 - [x] MCP server
 - [x] Cross-platform app (local web + Electron for mac/win)
-- [ ] Video stitching (ffmpeg) for multi-shot exports
 - [ ] More provider adapters (direct Volcengine, ComfyUI recipes)
 
 ## Contributing

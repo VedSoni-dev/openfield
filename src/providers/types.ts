@@ -14,6 +14,10 @@ export interface GenerateParams {
   image?: string;
   /** Character reference images (Soul ID). Providers use as subject reference. */
   references?: string[];
+  /** Audio url (lipsync / speak). */
+  audio?: string;
+  /** Source video url (upscale / video-to-video / extend). */
+  video?: string;
   durationSec?: number;
   aspectRatio?: string; // "16:9" | "9:16" | "1:1" | ...
   resolution?: string; // "720p" | "1080p" | "4k"

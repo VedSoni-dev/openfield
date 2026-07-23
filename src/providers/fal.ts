@@ -25,6 +25,8 @@ export const fal: Provider = {
       prompt: params.prompt,
       ...(params.image ? { image_url: params.image } : {}),
       ...(params.references?.length ? { reference_image_urls: params.references } : {}),
+      ...(params.audio ? { audio_url: params.audio } : {}),
+      ...(params.video ? { video_url: params.video } : {}),
       ...(params.durationSec ? { duration: String(params.durationSec) } : {}),
       ...(params.aspectRatio ? { aspect_ratio: params.aspectRatio } : {}),
       ...(params.resolution ? { resolution: params.resolution } : {}),
@@ -59,6 +61,8 @@ export const fal: Provider = {
     const urls: string[] = [];
     if (result.video?.url) urls.push(result.video.url);
     if (Array.isArray(result.videos)) urls.push(...result.videos.map((v: any) => v.url));
+    if (result.image?.url) urls.push(result.image.url);
+    if (Array.isArray(result.images)) urls.push(...result.images.map((v: any) => v.url ?? v));
     return { id: jobId, status: "succeeded", output: urls.filter(Boolean), raw: result };
   },
 };

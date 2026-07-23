@@ -25,7 +25,7 @@ function has(name: string): boolean {
 // Cinema Studio flags: --body --lens --focal --aperture --shot
 function readCinema(): Record<string, string> | undefined {
   const sel: Record<string, string> = {};
-  for (const g of ["body", "lens", "focal", "aperture", "shot"]) {
+  for (const g of ["body", "lens", "focal", "aperture", "shot", "angle"]) {
     const v = flag(g);
     if (v) sel[g] = v;
   }
@@ -54,6 +54,14 @@ async function main() {
       break;
     }
 
+    case "recipes": {
+      const { RECIPES } = await import("./recipes.js");
+      console.log(`${RECIPES.length} recipes:\n`);
+      for (const r of RECIPES) console.log(`  ${r.id.padEnd(18)} ${r.label} — ${r.desc}`);
+      console.log('\nuse: openfield generate --recipe cinematic-trailer --subject "..." --wait');
+      break;
+    }
+
     case "cinema": {
       const { CINEMA_GROUPS } = await import("./cinema.js");
       for (const [group, opts] of Object.entries(CINEMA_GROUPS)) {
@@ -75,14 +83,22 @@ async function main() {
     }
 
     case "generate": {
-      const subject = flag("subject") ?? args[1];
-      const model = flag("model") ?? "seedance-2.0";
+      // Optional recipe supplies defaults for model/presets/cinema/subject.
+      let recipe;
+      if (flag("recipe")) {
+        const { findRecipe } = await import("./recipes.js");
+        recipe = findRecipe(flag("recipe")!);
+        if (!recipe) return fail(`unknown recipe: ${flag("recipe")}. Run 'openfield recipes'.`);
+      }
+      const subject = flag("subject") ?? args[1] ?? recipe?.subjectHint;
+      const model = flag("model") ?? recipe?.model ?? "seedance-2.0";
       if (!subject) return fail('need --subject "..."');
-      const presets = (flag("presets") ?? "").split(",").filter(Boolean);
+      const flagPresets = (flag("presets") ?? "").split(",").filter(Boolean);
+      const presets = flagPresets.length ? flagPresets : recipe?.presets ?? [];
       const route = pickRoute(model);
       if (!route) return fail(`no configured key for ${model}. Run 'openfield models'.`);
 
-      const cinema = readCinema();
+      const cinema = readCinema() ?? recipe?.cinema;
       const c = compose({ subject, presets, cinema });
       console.log(`model=${model} via ${route.provider}`);
       console.log(`prompt: ${c.prompt}\n`);
@@ -94,6 +110,8 @@ async function main() {
         cinema,
         character: flag("character"),
         image: flag("image"),
+        audio: flag("audio"),
+        video: flag("video"),
         durationSec: flag("duration") ? Number(flag("duration")) : undefined,
         aspectRatio: flag("aspect"),
         resolution: flag("resolution"),
@@ -112,6 +130,30 @@ async function main() {
       break;
     }
 
+    case "image":
+    case "enhance":
+    case "lipsync":
+    case "restyle": {
+      // Operation verbs — Higgsfield parity (image start-frames, upscale, speak, v2v).
+      const opModel = { image: "image", enhance: "upscale", lipsync: "lipsync", restyle: "restyle" }[cmd]!;
+      if (!pickRoute(opModel)) return fail(`no configured key for ${opModel}. Run 'openfield models'.`);
+      const { job, provider } = await generate({
+        subject: flag("subject") ?? args[1] ?? "",
+        presets: [],
+        model: opModel,
+        image: flag("image"),
+        audio: flag("audio"),
+        video: flag("video"),
+      });
+      if (job.status === "failed") return fail(job.error ?? "op failed");
+      console.log(`${cmd} queued on ${provider}, job ${job.id}`);
+      if (has("wait")) {
+        const done = await waitFor(provider, job.id);
+        console.log(done.status === "succeeded" ? "done:\n" + (done.output ?? []).join("\n") : "failed: " + done.error);
+      } else console.log(`poll: openfield status --provider ${provider} --job ${job.id}`);
+      break;
+    }
+
     case "status": {
       const provider = flag("provider");
       const job = flag("job");
@@ -120,6 +162,20 @@ async function main() {
       console.log(`status: ${j.status}`);
       if (j.output?.length) console.log(j.output.join("\n"));
       if (j.error) console.log("error: " + j.error);
+      break;
+    }
+
+    case "stitch": {
+      const urls = args.slice(1).filter((a) => !a.startsWith("--") && !/^(film\.mp4)$/.test(a) && a !== flag("out"));
+      if (!urls.length) return fail('need clip urls/paths: openfield stitch <url1> <url2> ... --out film.mp4');
+      const out = flag("out") ?? "openfield.mp4";
+      const { stitch } = await import("./stitch.js");
+      try {
+        await stitch(urls, out, { onProgress: (m) => console.log(m) });
+        console.log(`stitched ${urls.length} clips → ${out}`);
+      } catch (e: any) {
+        return fail(e.message);
+      }
       break;
     }
 
@@ -157,9 +213,23 @@ async function main() {
       });
       const ok = result.shots.filter((s) => s.status === "succeeded").length;
       console.log(`\ndone: ${ok}/${result.shots.length} shots ok`);
+      const clips: string[] = [];
       for (const s of result.shots) {
-        if (s.output?.length) console.log(`  shot ${s.index + 1}: ${s.output.join(" ")}`);
+        if (s.output?.length) { console.log(`  shot ${s.index + 1}: ${s.output.join(" ")}`); clips.push(s.output[0]); }
         if (s.error) console.log(`  shot ${s.index + 1} error: ${s.error}`);
+      }
+      if (has("stitch") && has("wait") && clips.length > 1) {
+        const out = flag("out") ?? "openfield.mp4";
+        const { stitch } = await import("./stitch.js");
+        console.log("\nstitching...");
+        try {
+          await stitch(clips, out, { onProgress: (m) => console.log("  " + m) });
+          console.log(`film → ${out}`);
+        } catch (e: any) {
+          console.log("stitch skipped: " + e.message);
+        }
+      } else if (has("stitch") && !has("wait")) {
+        console.log("(add --wait so shots finish before stitching)");
       }
       break;
     }
@@ -213,6 +283,12 @@ Usage:
   openfield soul list | show <id> | rm <id>
   openfield auto "a 3-shot moody ad for a coffee brand" --model wan-2.2 --wait
   openfield auto "..." --character nova --dry     # just plan, no generation
+  openfield auto "..." --model wan-2.2 --wait --stitch --out film.mp4
+  openfield stitch <clip-url> <clip-url> --out film.mp4    # ffmpeg concat
+  openfield image   --subject "..." --wait        # generate a start frame
+  openfield enhance --video <url> --wait          # upscale a clip
+  openfield lipsync --video <url> --audio <url> --wait
+  openfield restyle --video <url> --subject "..." --wait
 
 Keys (bring your own):
   video:  FAL_KEY, REPLICATE_API_TOKEN, OPENFIELD_CUSTOM_URL

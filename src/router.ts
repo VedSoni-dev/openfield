@@ -31,6 +31,8 @@ export function pickRoute(modelId: string): Route | null {
 export interface GenerateOptions extends ComposeInput {
   model: string;
   image?: string;
+  audio?: string;
+  video?: string;
   durationSec?: number;
   aspectRatio?: string;
   resolution?: string;
@@ -71,6 +73,8 @@ export async function generate(opts: GenerateOptions): Promise<Dispatched> {
     providerModel: route.providerModel,
     image: opts.image ?? references?.[0],
     references,
+    audio: opts.audio,
+    video: opts.video,
     durationSec: opts.durationSec,
     aspectRatio: opts.aspectRatio,
     resolution: opts.resolution,

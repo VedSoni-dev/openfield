@@ -4,6 +4,8 @@ import { LENS_PRESETS } from "./lens.js";
 import { LIGHTING_PRESETS } from "./lighting.js";
 import { STYLE_PRESETS } from "./style.js";
 import { VFX_PRESETS } from "./vfx.js";
+import { MOOD_PRESETS } from "./mood.js";
+import { TRANSITION_PRESETS } from "./transition.js";
 
 // All preset packs merge here. Add a pack = import + spread.
 export const PRESETS: Preset[] = [
@@ -12,6 +14,8 @@ export const PRESETS: Preset[] = [
   ...LIGHTING_PRESETS,
   ...STYLE_PRESETS,
   ...VFX_PRESETS,
+  ...MOOD_PRESETS,
+  ...TRANSITION_PRESETS,
 ];
 
 export function findPreset(id: string): Preset | undefined {

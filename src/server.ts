@@ -9,6 +9,7 @@ import { dirname, join } from "node:path";
 
 import { PRESETS } from "./presets/index.js";
 import { CINEMA_GROUPS } from "./cinema.js";
+import { RECIPES } from "./recipes.js";
 import { CATALOG } from "./providers/catalog.js";
 import { compose } from "./compose.js";
 import { generate, pollOnce, configuredProviders, pickRoute } from "./router.js";
@@ -63,6 +64,7 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
   try {
     if (req.method === "GET" && p === "/api/presets") return json(res, 200, PRESETS), true;
     if (req.method === "GET" && p === "/api/cinema") return json(res, 200, CINEMA_GROUPS), true;
+    if (req.method === "GET" && p === "/api/recipes") return json(res, 200, RECIPES), true;
     if (req.method === "GET" && p === "/api/models")
       return json(res, 200, { models: CATALOG, configured: configuredProviders() }), true;
     if (req.method === "GET" && p === "/api/characters") return json(res, 200, listCharacters()), true;

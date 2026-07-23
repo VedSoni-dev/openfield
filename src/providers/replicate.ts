@@ -31,6 +31,8 @@ export const replicate: Provider = {
       prompt: params.prompt,
       ...(params.image ? { image: params.image } : {}),
       ...(params.references?.length ? { reference_images: params.references } : {}),
+      ...(params.audio ? { audio: params.audio } : {}),
+      ...(params.video ? { video: params.video } : {}),
       ...(params.durationSec ? { duration: params.durationSec } : {}),
       ...(params.aspectRatio ? { aspect_ratio: params.aspectRatio } : {}),
       ...(params.extra ?? {}),

@@ -62,7 +62,7 @@
       textarea { resize: vertical; min-height: 70px; font-family: var(--sans); }
       .row { display: flex; gap: 12px; flex-wrap: wrap; }
       .row > * { flex: 1; min-width: 150px; }
-      .cine { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+      .cine { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
       @media (max-width: 720px){ .cine { grid-template-columns: repeat(2,1fr); } }
       .cine label { margin-top: 0; }
 
@@ -102,6 +102,22 @@
       .shot:hover[data-m="fpv-drone"] .subj{transform:translate(34px,-20px) scale(2)} .shot:hover[data-m="tracking"] .subj{transform:translateX(-46px)}
       .shot:hover[data-m="bullet-time"] .subj{transform:translateX(30px) rotate(90deg) scale(1.3)} .shot:hover[data-m="snorricam"] .subj{transform:rotate(160deg)}
       .shot:hover[data-m="low-angle-hero"] .subj{transform:translateY(26px) scale(1.4)} .shot:hover[data-m="handheld"] .subj{transform:translate(4px,-3px)}
+      /* category wash — tint per preset family, revealed on hover */
+      .shot .wash { position: absolute; inset: 0; opacity: 0; transition: opacity .5s; mix-blend-mode: screen; pointer-events: none; }
+      .shot:hover .wash { opacity: .55; }
+      .shot[data-cat="lighting"] .wash { background: radial-gradient(circle at 30% 30%, #ff9a5a, transparent 60%), radial-gradient(circle at 70% 70%, #46d6c9, transparent 55%); }
+      .shot[data-cat="lens"] .wash { background: radial-gradient(circle at 50% 50%, transparent 20%, rgba(0,0,0,.6) 75%); }
+      .shot[data-cat="lens"]:hover .subj { filter: blur(4px); transform: scale(1.5); }
+      .shot[data-cat="style"] .wash { background: repeating-linear-gradient(0deg, rgba(255,255,255,.06) 0 1px, transparent 1px 3px); }
+      .shot[data-cat="style"]:hover .subj { filter: saturate(1.6) contrast(1.3); }
+      .shot[data-cat="vfx"] .wash { background: radial-gradient(circle at 50% 50%, #ff9a5a, transparent 45%); }
+      .shot[data-cat="vfx"]:hover .subj { transform: scale(2.6); filter: blur(3px); opacity: .5; }
+      .shot[data-cat="mood"] .wash { background: linear-gradient(135deg, #ff9a5a, #46d6c9); }
+      .shot[data-cat="mood"]:hover .subj { transform: scale(1.3); filter: hue-rotate(60deg); }
+      .shot[data-cat="transition"] .wash { background: linear-gradient(90deg, transparent, #fff, transparent); }
+      .shot[data-cat="transition"]:hover .wash { animation: swipe .7s ease; }
+      .shot[data-cat="transition"]:hover .subj { transform: translateX(50px); filter: blur(5px); }
+      @keyframes swipe { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
 
       .card { background: var(--ink-2); border: 1px solid var(--line); border-radius: 9px; padding: 13px 15px; }
       .card b { font-family: var(--serif); font-size: 16px; font-weight: 400; }
@@ -130,8 +146,8 @@
         post: (p, b) => fetch(p, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b) }).then((r) => r.json()),
         del: (p) => fetch(p, { method: "DELETE" }).then((r) => r.json()),
       };
-      let PRESETS = [], MODELS = [], CONFIGURED = [], CINEMA = {}, SEL = new Set(), CINE = {};
-      const TABS = ["Studio", "Presets", "Soul ID", "Director"];
+      let PRESETS = [], MODELS = [], CONFIGURED = [], CINEMA = {}, RECIPES = [], SEL = new Set(), CINE = {}, APPLIED = null;
+      const TABS = ["Studio", "Recipes", "Presets", "Soul ID", "Director"];
       let tab = "Studio";
 
       function drawNav() {
@@ -159,7 +175,7 @@
       }
       function readCine() {
         CINE = {};
-        ["body", "lens", "focal", "aperture", "shot"].forEach((g) => { const v = $("#c_" + g)?.value; if (v) CINE[g] = v; });
+        ["body", "lens", "focal", "aperture", "shot", "angle"].forEach((g) => { const v = $("#c_" + g)?.value; if (v) CINE[g] = v; });
         return Object.keys(CINE).length ? CINE : undefined;
       }
 
@@ -183,6 +199,7 @@
                 <div><label>Focal</label><select id="c_focal">${cineSelect("focal", "—")}</select></div>
                 <div><label>Aperture</label><select id="c_aperture">${cineSelect("aperture", "—")}</select></div>
                 <div><label>Shot</label><select id="c_shot">${cineSelect("shot", "—")}</select></div>
+                <div><label>Angle</label><select id="c_angle">${cineSelect("angle", "—")}</select></div>
               </div>
             </details>
             <label>Presets</label>
@@ -194,6 +211,14 @@
             <div class="out" id="out"></div>
           </div>`);
         wireChips($("#picker"));
+        // apply a recipe's model / cinema / subject if one was just picked
+        if (APPLIED) {
+          if (APPLIED.subjectHint) $("#subj").value = APPLIED.subjectHint;
+          if (APPLIED.model) $("#model").value = APPLIED.model;
+          for (const [g, v] of Object.entries(APPLIED.cinema || {})) { const el = $("#c_" + g); if (el) el.value = v; }
+          if (APPLIED.cinema && Object.keys(APPLIED.cinema).length) $("details").open = true;
+          APPLIED = null;
+        }
         const chars = await api.get("/api/characters");
         $("#char").innerHTML = `<option value="">none</option>` + chars.map((c) => `<option value="${c.id}">${c.name}</option>`).join("");
         $("#prev").onclick = async () => {
@@ -213,8 +238,13 @@
         };
       }
 
+      let presetCat = "all";
       function presets() {
-        view(`<div class="panel"><div class="eyebrow">Hover to preview the move</div><h2>Preset library</h2><div class="sub">${PRESETS.length} presets — the part Higgsfield paywalls. Click to toggle; they carry into the Studio tab.</div><div class="gal">${PRESETS.filter((p) => p.category === "camera").map((p) => `<div class="shot ${SEL.has(p.id) ? "on" : ""}" data-m="${p.id}" data-id="${p.id}"><div class="gl"></div><div class="subj"></div><div class="gcat">${p.category}</div><div class="glab">${p.label}</div></div>`).join("")}</div><div style="margin-top:18px" class="grid2">${PRESETS.filter((p) => p.category !== "camera").map((p) => `<div class="card"><b>${p.label}</b> <span class="pill">${p.category}</span><p>${p.desc}</p></div>`).join("")}</div></div>`);
+        const cats = ["all", ...new Set(PRESETS.map((p) => p.category))];
+        const list = PRESETS.filter((p) => presetCat === "all" || p.category === presetCat);
+        const filters = cats.map((c) => `<span class="chip ${c === presetCat ? "on" : ""}" data-cat="${c}">${c}</span>`).join("");
+        view(`<div class="panel"><div class="eyebrow">Hover a card to preview it · click to select</div><h2>Preset library</h2><div class="sub">${PRESETS.length} presets across ${cats.length - 1} categories — the part Higgsfield paywalls. Selected presets carry into the Studio tab.</div><div class="chips" style="margin-bottom:16px">${filters}</div><div class="gal">${list.map((p) => `<div class="shot ${SEL.has(p.id) ? "on" : ""}" data-cat="${p.category}" data-m="${p.id}" data-id="${p.id}" title="${p.desc}"><div class="gl"></div><div class="wash"></div><div class="subj"></div><div class="gcat">${p.category}</div><div class="glab">${p.label}</div></div>`).join("")}</div></div>`);
+        $("#view").querySelectorAll(".chip[data-cat]").forEach((c) => (c.onclick = () => { presetCat = c.dataset.cat; presets(); }));
         $("#view").querySelectorAll(".shot[data-id]").forEach((s) => (s.onclick = () => { const i = s.dataset.id; SEL.has(i) ? SEL.delete(i) : SEL.add(i); s.classList.toggle("on"); }));
       }
 
@@ -275,11 +305,22 @@
         $("#run").onclick = () => go(false);
       }
 
-      function render() { drawNav(); ({ Studio: studio, Presets: presets, "Soul ID": soul, Director: director }[tab])(); }
+      function recipes() {
+        view(`<div class="panel"><div class="eyebrow">One-click templates</div><h2>Recipes</h2><div class="sub">Tuned bundles of model, presets, and Cinema Studio glass. Pick one — it loads into the Studio ready to shoot.</div><div class="grid2">${RECIPES.map((r) => `<div class="card" data-r="${r.id}" style="cursor:pointer"><b>${r.label}</b> <span class="pill">${r.model}</span><p>${r.desc}</p><p style="color:var(--dim-2);margin-top:8px">${(r.presets || []).join(" · ")}</p></div>`).join("")}</div></div>`);
+        $("#view").querySelectorAll("[data-r]").forEach((c) => (c.onclick = () => {
+          const r = RECIPES.find((x) => x.id === c.dataset.r);
+          SEL = new Set(r.presets || []);
+          APPLIED = r;
+          tab = "Studio";
+          render();
+        }));
+      }
+      function render() { drawNav(); ({ Studio: studio, Recipes: recipes, Presets: presets, "Soul ID": soul, Director: director }[tab])(); }
 
       (async () => {
         PRESETS = await api.get("/api/presets");
         CINEMA = await api.get("/api/cinema");
+        RECIPES = await api.get("/api/recipes");
         const m = await api.get("/api/models");
         MODELS = m.models; CONFIGURED = m.configured;
         const st = $("#status");

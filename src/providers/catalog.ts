@@ -7,10 +7,12 @@ export interface Route {
   providerModel: string;
 }
 
+export type ModelKind = "t2v" | "i2v" | "both" | "image" | "upscale" | "lipsync" | "v2v";
+
 export interface ModelEntry {
   id: string; // canonical, what users type
   label: string;
-  kind: "t2v" | "i2v" | "both";
+  kind: ModelKind;
   routes: Route[];
 }
 
@@ -78,6 +80,44 @@ export const CATALOG: ModelEntry[] = [
     routes: [
       { provider: "fal", providerModel: "fal-ai/minimax/hailuo-02/standard/text-to-video" },
       { provider: "replicate", providerModel: "minimax/hailuo-02" },
+    ],
+  },
+
+  // --- Operations (everything Higgsfield does beyond plain t2v) ---
+  {
+    id: "image", // start-frame / poster generation for image-to-video
+    label: "FLUX.1 image (start frames)",
+    kind: "image",
+    routes: [
+      { provider: "fal", providerModel: "fal-ai/flux/dev" },
+      { provider: "replicate", providerModel: "black-forest-labs/flux-dev" },
+    ],
+  },
+  {
+    id: "upscale", // enhance / upres a generated clip
+    label: "Video upscaler",
+    kind: "upscale",
+    routes: [
+      { provider: "fal", providerModel: "fal-ai/topaz/upscale/video" },
+      { provider: "replicate", providerModel: "topazlabs/video-upscale" },
+    ],
+  },
+  {
+    id: "lipsync", // Speak / LipSync Studio
+    label: "LipSync (talking video)",
+    kind: "lipsync",
+    routes: [
+      { provider: "fal", providerModel: "fal-ai/sync-lipsync" },
+      { provider: "replicate", providerModel: "bytedance/latentsync" },
+    ],
+  },
+  {
+    id: "restyle", // video-to-video restyle
+    label: "Restyle (video-to-video)",
+    kind: "v2v",
+    routes: [
+      { provider: "fal", providerModel: "fal-ai/wan/v2.2-a14b/video-to-video" },
+      { provider: "custom", providerModel: "restyle" },
     ],
   },
 ];

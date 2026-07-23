@@ -1,4 +1,4 @@
-export type PresetCategory = "camera" | "lens" | "lighting" | "style" | "vfx";
+export type PresetCategory = "camera" | "lens" | "lighting" | "style" | "vfx" | "mood" | "transition";
 
 export interface Preset {
   id: string;

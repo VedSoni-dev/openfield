@@ -8,6 +8,19 @@ All notable changes to openfield are documented here. Format based on
 
 ### Added
 
+- Cinema Studio expanded: 11 camera bodies, 10 lenses, 8 focal lengths, 6
+  apertures, 7 shot sizes, and a new camera-angle group.
+- Preset library grown to 61 across 7 categories (added mood + transition packs).
+- Recipes — one-click template gallery (8 built-in), CLI `--recipe`, UI tab.
+- Operations: image start-frames, video upscale, lipsync, and video-to-video
+  restyle, as catalog models with CLI verbs (`image` / `enhance` / `lipsync` /
+  `restyle`).
+- Video stitching (`openfield stitch`, `auto --stitch`) via ffmpeg.
+- UI: all-category animated preset gallery with category filters; Cinema Studio
+  angle control; Recipes tab that loads a full look into the Studio.
+- Landing page + docs (mcp, soul-id, orchestrator, cinema-studio, operations,
+  recipes, desktop).
+
 - Provider adapters: `fal`, `replicate`, `custom` (self-hosted). BYOK.
 - Canonical model catalog with multi-route fallback (Seedance, Kling, Veo, Wan,
   Hunyuan, LTX, Minimax Hailuo).
