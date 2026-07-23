@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>openfield — open-source cinema AI</title>
+    <meta name="description" content="Open-source Higgsfield. Bring your own video-model keys, get the cinematic preset library, Cinema Studio, character consistency, and an AI director — free." />
+    <style>
+      :root {
+        --ink: #0a0b0d;
+        --ink-2: #101215;
+        --panel: #14171b;
+        --line: #23262c;
+        --paper: #ece6da;
+        --dim: #8b877c;
+        --amber: #ff9a5a;
+        --amber-soft: #ffbc8a;
+        --teal: #46d6c9;
+        --teal-deep: #1c7a72;
+        --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+        --mono: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, monospace;
+        --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--ink);
+        color: var(--paper);
+        font-family: var(--sans);
+        line-height: 1.6;
+        overflow-x: hidden;
+      }
+      /* film grain overlay */
+      body::after {
+        content: "";
+        position: fixed; inset: 0; z-index: 9999; pointer-events: none; opacity: 0.05;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      }
+      .mono { font-family: var(--mono); }
+      .kicker {
+        font-family: var(--mono); font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase;
+        color: var(--teal);
+      }
+      a { color: inherit; }
+
+      /* viewfinder corner brackets */
+      .frame { position: relative; }
+      .frame::before, .frame::after,
+      .frame > .tl, .frame > .tr, .frame > .bl, .frame > .br { pointer-events: none; }
+      .brackets span {
+        position: absolute; width: 18px; height: 18px; border: 1.5px solid var(--dim); opacity: 0.5;
+      }
+      .brackets .tl { top: 0; left: 0; border-right: 0; border-bottom: 0; }
+      .brackets .tr { top: 0; right: 0; border-left: 0; border-bottom: 0; }
+      .brackets .bl { bottom: 0; left: 0; border-right: 0; border-top: 0; }
+      .brackets .br { bottom: 0; right: 0; border-left: 0; border-top: 0; }
+
+      /* NAV */
+      nav {
+        position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+        display: flex; align-items: center; gap: 20px;
+        padding: 16px 28px; backdrop-filter: blur(14px);
+        background: color-mix(in srgb, var(--ink) 78%, transparent);
+        border-bottom: 1px solid var(--line);
+      }
+      .brand { font-family: var(--serif); font-size: 21px; letter-spacing: -0.01em; }
+      .brand b { color: var(--amber); font-style: italic; font-weight: 400; }
+      .rec { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); display: inline-block; margin-right: 7px; animation: blink 2s infinite; vertical-align: middle; }
+      @keyframes blink { 0%, 45% { opacity: 1; } 55%, 100% { opacity: 0.25; } }
+      nav .links { margin-left: auto; display: flex; gap: 22px; align-items: center; font-family: var(--mono); font-size: 13px; }
+      nav .links a { color: var(--dim); text-decoration: none; transition: color 0.2s; }
+      nav .links a:hover { color: var(--paper); }
+      .btn {
+        display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 13px;
+        padding: 9px 16px; border-radius: 6px; text-decoration: none; border: 1px solid var(--line);
+        transition: all 0.2s; cursor: pointer;
+      }
+      .btn.solid { background: var(--amber); color: #1a0f06; border-color: var(--amber); font-weight: 600; }
+      .btn.solid:hover { background: var(--amber-soft); transform: translateY(-1px); }
+      .btn.wire:hover { border-color: var(--amber); color: var(--amber); }
+
+      /* HERO */
+      .hero {
+        min-height: 100vh; display: flex; flex-direction: column; justify-content: center;
+        padding: 130px 28px 80px; max-width: 1180px; margin: 0 auto; position: relative;
+      }
+      .light-leak {
+        position: absolute; top: -10%; right: -15%; width: 60vw; height: 60vw; max-width: 760px; max-height: 760px;
+        background: radial-gradient(circle at 60% 40%, color-mix(in srgb, var(--amber) 32%, transparent), transparent 60%),
+                    radial-gradient(circle at 30% 70%, color-mix(in srgb, var(--teal) 24%, transparent), transparent 55%);
+        filter: blur(30px); opacity: 0.55; z-index: -1; animation: drift 18s ease-in-out infinite alternate;
+      }
+      @keyframes drift { from { transform: translate(0,0) scale(1); } to { transform: translate(-40px, 30px) scale(1.1); } }
+      .hero h1 {
+        font-family: var(--serif); font-weight: 400; letter-spacing: -0.02em; line-height: 1.02;
+        font-size: clamp(48px, 8.5vw, 108px); margin: 22px 0 0; max-width: 14ch;
+      }
+      .hero h1 em { color: var(--amber); font-style: italic; }
+      .hero .sub {
+        font-size: clamp(16px, 2.2vw, 21px); color: var(--dim); max-width: 56ch; margin: 28px 0 0; line-height: 1.55;
+      }
+      .hero .sub b { color: var(--paper); font-weight: 500; }
+      .hero .cta { display: flex; gap: 14px; margin-top: 38px; flex-wrap: wrap; }
+      .hero .cta .btn { padding: 13px 22px; font-size: 14px; }
+      .reveal { opacity: 0; transform: translateY(18px); animation: rise 0.9s cubic-bezier(0.2,0.7,0.2,1) forwards; }
+      .d1 { animation-delay: 0.05s; } .d2 { animation-delay: 0.18s; } .d3 { animation-delay: 0.32s; } .d4 { animation-delay: 0.46s; } .d5 { animation-delay: 0.6s; }
+      @keyframes rise { to { opacity: 1; transform: translateY(0); } }
+
+      /* model strip */
+      .strip { margin-top: 60px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); overflow: hidden; padding: 0; }
+      .marquee { display: flex; gap: 46px; padding: 16px 0; white-space: nowrap; animation: scroll 26s linear infinite; font-family: var(--mono); font-size: 13px; color: var(--dim); letter-spacing: 0.12em; }
+      .marquee span { display: inline-flex; align-items: center; gap: 10px; }
+      .marquee b { color: var(--paper); font-weight: 400; }
+      .marquee .dot { color: var(--teal); }
+      @keyframes scroll { to { transform: translateX(-50%); } }
+
+      /* SECTION */
+      section { max-width: 1180px; margin: 0 auto; padding: 100px 28px; }
+      .sec-head { max-width: 62ch; }
+      .sec-head h2 { font-family: var(--serif); font-weight: 400; font-size: clamp(30px, 4.5vw, 52px); letter-spacing: -0.02em; margin: 14px 0 0; line-height: 1.08; }
+      .sec-head h2 em { font-style: italic; color: var(--teal); }
+      .sec-head p { color: var(--dim); font-size: 17px; margin: 18px 0 0; }
+
+      /* pitch band */
+      .pitch { background: linear-gradient(180deg, var(--ink-2), var(--ink)); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+      .pitch .big { font-family: var(--serif); font-size: clamp(26px, 4vw, 44px); line-height: 1.25; font-weight: 400; letter-spacing: -0.01em; max-width: 20ch; }
+      .pitch .big s { color: var(--dim); text-decoration-color: var(--amber); }
+      .pitch .big em { color: var(--amber); font-style: italic; }
+
+      /* feature grid */
+      .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin-top: 44px; }
+      @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+      .cell { background: var(--panel); padding: 30px 26px; transition: background 0.25s; position: relative; }
+      .cell:hover { background: var(--ink-2); }
+      .cell .n { font-family: var(--mono); font-size: 12px; color: var(--teal); letter-spacing: 0.1em; }
+      .cell h3 { font-family: var(--serif); font-weight: 400; font-size: 23px; margin: 14px 0 8px; letter-spacing: -0.01em; }
+      .cell p { color: var(--dim); font-size: 15px; margin: 0; }
+
+      /* preset gallery */
+      .gal { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 44px; }
+      @media (max-width: 900px) { .gal { grid-template-columns: repeat(2, 1fr); } }
+      .shot {
+        position: relative; aspect-ratio: 16/10; border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+        background: radial-gradient(120% 120% at 30% 20%, #1a1e24, #0c0e11); cursor: pointer;
+      }
+      .shot .subj {
+        position: absolute; width: 34px; height: 34px; border-radius: 50%;
+        background: linear-gradient(150deg, var(--amber), var(--teal)); top: 50%; left: 50%; margin: -17px;
+        transition: transform 1.1s cubic-bezier(0.3,0.7,0.2,1); box-shadow: 0 0 30px color-mix(in srgb, var(--amber) 40%, transparent);
+      }
+      .shot .label { position: absolute; left: 12px; bottom: 10px; font-family: var(--mono); font-size: 12px; color: var(--paper); letter-spacing: 0.06em; z-index: 2; }
+      .shot .cat { position: absolute; right: 12px; top: 10px; font-family: var(--mono); font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.14em; }
+      .shot .grid-lines { position: absolute; inset: 0; background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 33.33% 33.33%; opacity: 0.25; }
+      .shot:hover[data-move="dolly"] .subj { transform: scale(2.4); }
+      .shot:hover[data-move="orbit"] .subj { transform: translateX(46px) rotate(180deg); }
+      .shot:hover[data-move="crane"] .subj { transform: translateY(-40px) scale(0.7); }
+      .shot:hover[data-move="whip"] .subj { transform: translateX(70px); filter: blur(6px); }
+      .shot:hover[data-move="crash"] .subj { transform: scale(3.2); }
+      .shot:hover[data-move="fpv"] .subj { transform: translate(40px,-24px) scale(2); }
+      .shot:hover[data-move="track"] .subj { transform: translateX(-52px); }
+      .shot:hover[data-move="tilt"] .subj { transform: translateY(38px) scale(0.6); }
+
+      /* comparison */
+      .cmp { width: 100%; border-collapse: collapse; margin-top: 40px; font-size: 15px; }
+      .cmp th, .cmp td { text-align: left; padding: 15px 18px; border-bottom: 1px solid var(--line); }
+      .cmp thead th { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); font-weight: 400; }
+      .cmp thead th.us { color: var(--amber); }
+      .cmp tbody td:first-child { color: var(--paper); }
+      .cmp td.y { color: var(--teal); font-family: var(--mono); font-size: 13px; }
+      .cmp td.n { color: var(--dim); font-family: var(--mono); font-size: 13px; }
+      .cmp tbody tr:hover { background: var(--ink-2); }
+
+      /* steps */
+      .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 44px; }
+      @media (max-width: 800px) { .steps { grid-template-columns: 1fr; } }
+      .step { border-left: 2px solid var(--line); padding: 4px 0 4px 22px; }
+      .step .num { font-family: var(--serif); font-style: italic; font-size: 34px; color: var(--amber); }
+      .step h4 { font-family: var(--mono); font-size: 13px; letter-spacing: 0.06em; margin: 8px 0 6px; color: var(--paper); }
+      .step p { color: var(--dim); font-size: 14px; margin: 0; }
+      .step code { font-family: var(--mono); font-size: 12.5px; color: var(--teal); background: var(--ink-2); padding: 2px 6px; border-radius: 4px; }
+
+      /* final CTA */
+      .final { text-align: center; padding: 120px 28px; }
+      .final h2 { font-family: var(--serif); font-weight: 400; font-size: clamp(34px, 6vw, 68px); letter-spacing: -0.02em; margin: 0; }
+      .final h2 em { font-style: italic; color: var(--amber); }
+      .final .cta { display: flex; gap: 14px; justify-content: center; margin-top: 34px; flex-wrap: wrap; }
+      .code-block { max-width: 520px; margin: 34px auto 0; background: var(--ink-2); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; text-align: left; font-family: var(--mono); font-size: 13.5px; color: var(--paper); }
+      .code-block .c { color: var(--dim); }
+      .code-block .g { color: var(--teal); }
+
+      footer { border-top: 1px solid var(--line); padding: 40px 28px; max-width: 1180px; margin: 0 auto; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; font-family: var(--mono); font-size: 12.5px; color: var(--dim); }
+      footer a { color: var(--dim); text-decoration: none; }
+      footer a:hover { color: var(--paper); }
+      footer .brand { font-family: var(--serif); font-size: 17px; color: var(--paper); }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="brand"><span class="rec"></span>open<b>field</b></div>
+      <div class="links">
+        <a href="#features">Features</a>
+        <a href="#presets">Presets</a>
+        <a href="#compare">vs Higgsfield</a>
+        <a href="https://github.com/VedSoni-dev/openfield" class="btn wire">GitHub ↗</a>
+      </div>
+    </nav>
+
+    <!-- HERO -->
+    <header class="hero frame">
+      <div class="light-leak"></div>
+      <div class="kicker reveal d1">Open-source cinema AI · MIT</div>
+      <h1 class="reveal d2">The camera moves.<br />You keep the <em>keys.</em></h1>
+      <p class="sub reveal d3">
+        Higgsfield resells Seedance, Kling, Veo &amp; Wan behind a subscription, then charges again for the
+        <b>presets, character locks, and the AI director</b> stacked on top. openfield gives you all of it —
+        <b>bring your own model keys</b>, no markup, no lock-in.
+      </p>
+      <div class="cta reveal d4">
+        <a href="#install" class="btn solid">▶ Get started</a>
+        <a href="https://github.com/VedSoni-dev/openfield" class="btn wire">Star on GitHub</a>
+      </div>
+
+      <div class="strip reveal d5">
+        <div class="marquee" id="marq"></div>
+      </div>
+    </header>
+
+    <!-- PITCH -->
+    <div class="pitch">
+      <section>
+        <div class="kicker">The premise</div>
+        <p class="big">
+          You already pay for the model. <s>Then Higgsfield charges you</s>
+          <em>again for the buttons.</em> The buttons are prompt templates. So we open-sourced them.
+        </p>
+      </section>
+    </div>
+
+    <!-- FEATURES -->
+    <section id="features">
+      <div class="sec-head">
+        <div class="kicker">Everything Higgsfield gates — free</div>
+        <h2>Match its best features. <em>Then own them.</em></h2>
+        <p>Each capability that makes Higgsfield feel premium, rebuilt as inspectable MIT code.</p>
+      </div>
+      <div class="grid">
+        <div class="cell"><div class="n">ROUTER</div><h3>Bring your own keys</h3><p>fal, Replicate, or a self-hosted box. One catalog, seven models, automatic fallback to whichever key you hold. Zero markup.</p></div>
+        <div class="cell"><div class="n">PRESETS</div><h3>47 cinematic presets</h3><p>Camera moves, lenses, lighting, film stocks, VFX — stackable, model-agnostic prose. The exact thing behind Higgsfield's paywalled gallery.</p></div>
+        <div class="cell"><div class="n">CINEMA STUDIO</div><h3>Real optics</h3><p>Choose a camera body, lens, focal length, aperture, and shot size. openfield composes it into glass-accurate direction — their flagship, open.</p></div>
+        <div class="cell"><div class="n">SOUL ID</div><h3>Character consistency</h3><p>Save a character once — reference images plus look traits — and lock the same face across every shot and every model.</p></div>
+        <div class="cell"><div class="n">DIRECTOR</div><h3>The open Hermes</h3><p>A brief becomes a storyboard becomes finished shots. Function-calling over any OpenAI-compatible LLM — free-tier friendly.</p></div>
+        <div class="cell"><div class="n">SURFACES</div><h3>CLI · MCP · Desktop</h3><p>Generate from the terminal, from inside Claude Code via MCP, or a native mac/win app. Same core everywhere.</p></div>
+      </div>
+    </section>
+
+    <!-- PRESETS -->
+    <section id="presets">
+      <div class="sec-head">
+        <div class="kicker">The preset gallery · hover to preview the move</div>
+        <h2>Cinematography as <em>clickable buttons.</em></h2>
+      </div>
+      <div class="gal" id="gallery"></div>
+    </section>
+
+    <!-- COMPARE -->
+    <section id="compare">
+      <div class="sec-head">
+        <div class="kicker">Head to head</div>
+        <h2>openfield <em>vs</em> Higgsfield</h2>
+      </div>
+      <table class="cmp">
+        <thead>
+          <tr><th>Capability</th><th class="us">openfield</th><th>Higgsfield</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Model access</td><td class="y">your keys, no markup</td><td class="n">bundled subscription</td></tr>
+          <tr><td>Camera / motion presets</td><td class="y">47, MIT, editable</td><td class="n">paywalled gallery</td></tr>
+          <tr><td>Cinema Studio (body / lens / focal)</td><td class="y">yes</td><td class="n">yes (paid)</td></tr>
+          <tr><td>Character consistency</td><td class="y">Soul ID, local</td><td class="n">Soul ID (paid)</td></tr>
+          <tr><td>AI director / agent</td><td class="y">any LLM, free tier</td><td class="n">Hermes (paid)</td></tr>
+          <tr><td>MCP / generate from your agent</td><td class="y">built in</td><td class="n">hosted, gated</td></tr>
+          <tr><td>Self-host your own model</td><td class="y">custom adapter</td><td class="n">no</td></tr>
+          <tr><td>Source</td><td class="y">MIT, on GitHub</td><td class="n">closed</td></tr>
+          <tr><td>Price</td><td class="y">$0 + your usage</td><td class="n">from $17–49/mo</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- HOW / INSTALL -->
+    <div class="pitch" id="install">
+      <section>
+        <div class="sec-head">
+          <div class="kicker">Three commands</div>
+          <h2>From zero to a <em>directed shot.</em></h2>
+        </div>
+        <div class="steps">
+          <div class="step"><div class="num">1</div><h4>INSTALL</h4><p>Clone, install, drop in one key. <code>FAL_KEY</code> unlocks most models.</p></div>
+          <div class="step"><div class="num">2</div><h4>COMPOSE</h4><p>Stack presets and Cinema Studio glass. <code>openfield compose</code> previews the prompt free.</p></div>
+          <div class="step"><div class="num">3</div><h4>GENERATE</h4><p>CLI, desktop app, or MCP. <code>openfield ui</code> opens the studio.</p></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- FINAL -->
+    <div class="final frame">
+      <span class="brackets"><span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span></span>
+      <div class="kicker">Roll camera</div>
+      <h2>Stop renting the <em>buttons.</em></h2>
+      <div class="code-block">
+        <span class="c"># bring your own key, get the whole studio</span><br />
+        git clone <span class="g">github.com/VedSoni-dev/openfield</span><br />
+        npm install &amp;&amp; npm run build<br />
+        openfield <span class="g">ui</span>
+      </div>
+      <div class="cta">
+        <a href="https://github.com/VedSoni-dev/openfield" class="btn solid">Get openfield</a>
+        <a href="#features" class="btn wire">See features</a>
+      </div>
+    </div>
+
+    <footer>
+      <div class="brand">open<span style="color:var(--amber)">field</span></div>
+      <span>MIT · bring your own keys</span>
+      <a href="https://github.com/VedSoni-dev/openfield" style="margin-left:auto">GitHub</a>
+      <a href="#features">Features</a>
+      <a href="#compare">Comparison</a>
+    </footer>
+
+    <script>
+      // model marquee (doubled for seamless loop)
+      const models = [
+        ["Seedance 2.0", "ByteDance"], ["Kling 2.5", "Kuaishou"], ["Veo 3.1", "Google"],
+        ["Wan 2.2", "Alibaba"], ["HunyuanVideo", "Tencent"], ["LTX", "Lightricks"], ["Hailuo 02", "MiniMax"],
+      ];
+      const marq = document.getElementById("marq");
+      const row = models.map(([m, o]) => `<span><b>${m}</b> <span class="dot">/</span> ${o}</span>`).join("");
+      marq.innerHTML = row + row;
+
+      // preset gallery — each card demos its camera move on hover
+      const shots = [
+        ["Dolly In", "camera", "dolly"], ["Orbit", "camera", "orbit"], ["Crane Up", "camera", "crane"],
+        ["Whip Pan", "camera", "whip"], ["Crash Zoom", "camera", "crash"], ["FPV Drone", "camera", "fpv"],
+        ["Tracking", "camera", "track"], ["Low Angle", "camera", "tilt"],
+      ];
+      document.getElementById("gallery").innerHTML = shots.map(([l, c, m]) => `
+        <div class="shot" data-move="${m}">
+          <div class="grid-lines"></div>
+          <div class="subj"></div>
+          <div class="cat">${c}</div>
+          <div class="label">${l}</div>
+        </div>`).join("");
+    </script>
+  </body>
+</html>

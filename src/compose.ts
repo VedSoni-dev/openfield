@@ -3,6 +3,7 @@
 
 import type { Preset } from "./presets/types.js";
 import { findPreset } from "./presets/index.js";
+import { cinemaFragment, type CinemaSelection } from "./cinema.js";
 
 export interface ComposeInput {
   /** What the user actually wants on screen. */
@@ -11,6 +12,8 @@ export interface ComposeInput {
   presets?: string[];
   /** Soul ID identity phrase, woven in right after the subject. */
   identity?: string;
+  /** Cinema Studio selection (camera body, lens, focal, aperture, shot). */
+  cinema?: CinemaSelection;
 }
 
 export interface Composed {
@@ -38,6 +41,13 @@ export function compose(input: ComposeInput): Composed {
 
   const params: Record<string, unknown> = {};
   for (const p of used) Object.assign(params, p.params ?? {});
+
+  // Cinema Studio fragment goes last — the optical/format description.
+  if (input.cinema) {
+    const cin = cinemaFragment(input.cinema);
+    if (cin.phrase) parts.push(cin.phrase);
+    Object.assign(params, cin.params);
+  }
 
   return { prompt: parts.join(". "), params, used };
 }

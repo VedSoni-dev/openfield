@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 import { PRESETS } from "./presets/index.js";
+import { CINEMA_GROUPS } from "./cinema.js";
 import { CATALOG } from "./providers/catalog.js";
 import { compose } from "./compose.js";
 import { generate, pollOnce, configuredProviders, pickRoute } from "./router.js";
@@ -61,6 +62,7 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
   const p = url.pathname;
   try {
     if (req.method === "GET" && p === "/api/presets") return json(res, 200, PRESETS), true;
+    if (req.method === "GET" && p === "/api/cinema") return json(res, 200, CINEMA_GROUPS), true;
     if (req.method === "GET" && p === "/api/models")
       return json(res, 200, { models: CATALOG, configured: configuredProviders() }), true;
     if (req.method === "GET" && p === "/api/characters") return json(res, 200, listCharacters()), true;
@@ -71,6 +73,7 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
       const c = compose({
         subject: b.subject ?? "",
         presets: b.presets ?? [],
+        cinema: b.cinema,
         identity: identity ? `${identity.name}, the same consistent character` : undefined,
       });
       return json(res, 200, c), true;

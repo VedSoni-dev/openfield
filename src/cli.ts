@@ -22,6 +22,15 @@ function flag(name: string): string | undefined {
 function has(name: string): boolean {
   return args.includes(`--${name}`);
 }
+// Cinema Studio flags: --body --lens --focal --aperture --shot
+function readCinema(): Record<string, string> | undefined {
+  const sel: Record<string, string> = {};
+  for (const g of ["body", "lens", "focal", "aperture", "shot"]) {
+    const v = flag(g);
+    if (v) sel[g] = v;
+  }
+  return Object.keys(sel).length ? sel : undefined;
+}
 
 async function main() {
   switch (cmd) {
@@ -45,11 +54,21 @@ async function main() {
       break;
     }
 
+    case "cinema": {
+      const { CINEMA_GROUPS } = await import("./cinema.js");
+      for (const [group, opts] of Object.entries(CINEMA_GROUPS)) {
+        console.log(`\n${group.toUpperCase()}`);
+        for (const o of opts) console.log(`  ${o.id.padEnd(14)} ${o.label}`);
+      }
+      console.log('\nuse: openfield generate --subject "..." --body arri-alexa --focal f85 --shot cu');
+      break;
+    }
+
     case "compose": {
       const subject = flag("subject") ?? args[1];
       if (!subject) return fail("need --subject \"...\"");
       const presets = (flag("presets") ?? "").split(",").filter(Boolean);
-      const c = compose({ subject, presets });
+      const c = compose({ subject, presets, cinema: readCinema() });
       console.log("PROMPT:\n" + c.prompt);
       if (Object.keys(c.params).length) console.log("\nPARAMS:\n" + JSON.stringify(c.params, null, 2));
       break;
@@ -63,7 +82,8 @@ async function main() {
       const route = pickRoute(model);
       if (!route) return fail(`no configured key for ${model}. Run 'openfield models'.`);
 
-      const c = compose({ subject, presets });
+      const cinema = readCinema();
+      const c = compose({ subject, presets, cinema });
       console.log(`model=${model} via ${route.provider}`);
       console.log(`prompt: ${c.prompt}\n`);
 
@@ -71,6 +91,7 @@ async function main() {
         subject,
         presets,
         model,
+        cinema,
         character: flag("character"),
         image: flag("image"),
         durationSec: flag("duration") ? Number(flag("duration")) : undefined,
@@ -181,6 +202,7 @@ async function main() {
 Usage:
   openfield models                       list models + which providers reach them
   openfield presets [query]              list/search the free preset library
+  openfield cinema                       list Cinema Studio options (body/lens/focal…)
   openfield compose --subject "..." --presets dolly-in,orbit
                                          preview the composed prompt (no API call)
   openfield generate --subject "..." --model seedance-2.0 --presets orbit --wait
