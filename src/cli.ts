@@ -192,6 +192,45 @@ async function main() {
       break;
     }
 
+    case "shotlist":
+    case "sl": {
+      const d = await import("./director/index.js");
+      const sub = args[1];
+      const pid = args[2];
+      if (!pid) return fail("usage: openfield shotlist <compile|show|scene|html> <projectId> ...");
+      if (sub === "compile") {
+        const { llmConfigured } = await import("./orchestrator/index.js");
+        if (!llmConfigured()) return fail("no LLM key. Set OPENROUTER_API_KEY (Hermes/free tier).");
+        const script = flag("script") ?? (flag("script-file") ? (await import("node:fs")).readFileSync(flag("script-file")!, "utf8") : undefined);
+        if (!script) return fail('need --script "..." or --script-file <path>');
+        console.log("directing…");
+        const sb = await d.compileShotlist(pid, { script, notes: flag("notes"), musicHandle: flag("music"), targetRuntimeS: flag("runtime") ? Number(flag("runtime")) : undefined });
+        console.log(`"${sb.project_title}" — ${sb.scenes.length} scenes\n`);
+        sb.scenes.forEach((s) => console.log(`  ${s.code.padEnd(4)} ${s.title}${s.element_handles.length ? "  [" + s.element_handles.map((h) => "@" + h).join(" ") + "]" : ""}`));
+      } else if (sub === "show") {
+        const sb = d.getShotlist(pid);
+        if (!sb) return fail("no shotlist. compile first.");
+        console.log("STYLE PREFIX:\n" + sb.style_prefix + "\n");
+        sb.scenes.forEach((s) => console.log(`\n=== ${s.code} · ${s.title} ===\n` + d.compileScene(pid, sb, s).prompt));
+      } else if (sub === "scene") {
+        const sb = d.getShotlist(pid);
+        const s = sb?.scenes.find((x) => x.code === args[3]);
+        if (!sb || !s) return fail("scene not found");
+        const r = d.compileScene(pid, sb, s);
+        console.log(r.prompt);
+        if (r.missing.length) console.log("\n⚠ unlocked: " + r.missing.map((m) => "@" + m).join(", "));
+      } else if (sub === "html") {
+        const sb = d.getShotlist(pid);
+        if (!sb) return fail("no shotlist. compile first.");
+        const out = flag("out") ?? "shotlist.html";
+        (await import("node:fs")).writeFileSync(out, d.exportShotlistHtml(pid, sb));
+        console.log(`wrote ${out}`);
+      } else {
+        console.log("shotlist commands: compile | show | scene <code> | html");
+      }
+      break;
+    }
+
     case "project":
     case "proj": {
       const proj = await import("./projects.js");

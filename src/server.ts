@@ -67,6 +67,30 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
     if (req.method === "GET" && p === "/api/cinema") return json(res, 200, CINEMA_GROUPS), true;
     if (req.method === "GET" && p === "/api/recipes") return json(res, 200, RECIPES), true;
 
+    // --- Shotlist Director ---
+    if (p.startsWith("/api/director")) {
+      const d = await import("./director/index.js");
+      const pid = url.searchParams.get("project") ?? "";
+      if (req.method === "GET" && p === "/api/director/shotlist") {
+        const sb = d.getShotlist(pid);
+        return json(res, 200, sb ? { shotlist: sb, scenes: sb.scenes.map((s) => ({ code: s.code, ...d.compileScene(pid, sb, s) })) } : null), true;
+      }
+      if (req.method === "GET" && p === "/api/director/html") {
+        const sb = d.getShotlist(pid);
+        if (!sb) return json(res, 404, { error: "no shotlist" }), true;
+        const html = d.exportShotlistHtml(pid, sb);
+        res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+        return res.end(html), true;
+      }
+      if (req.method === "POST" && p === "/api/director/compile") {
+        const b = await readBody(req);
+        const { llmConfigured } = await import("./orchestrator/index.js");
+        if (!llmConfigured()) return json(res, 400, { error: "no LLM key (OPENROUTER_API_KEY)" }), true;
+        const sb = await d.compileShotlist(pid, { script: b.script, notes: b.notes, musicHandle: b.music, targetRuntimeS: b.runtime });
+        return json(res, 200, sb), true;
+      }
+    }
+
     // --- Projects & Elements (Cinema Studio workflow) ---
     if (p.startsWith("/api/projects") || p.startsWith("/api/elements")) {
       const proj = await import("./projects.js");
