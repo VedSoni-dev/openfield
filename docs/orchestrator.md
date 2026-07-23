@@ -1,18 +1,39 @@
 # Orchestrator — the open Hermes
 
 Higgsfield's *Hermes* is a fine-tuned Nous Hermes 3 that function-calls over ~40
-tools to run a whole production (script → character → shots → video). openfield's
-orchestrator is the same idea, model-agnostic and free-tier friendly.
+tools to run a whole production. openfield runs the **actual Nous Hermes 3**
+model in a genuine multi-tool agent loop — same brain, open tools.
 
-## How it works
+## The agent (default)
 
-1. **Plan.** The LLM is given the full preset + model catalog and calls one
-   function, `storyboard`, whose arguments are the shot list. Single-tool
-   function calling — robust even on small free models.
-2. **Sanitize.** Unknown preset/model ids are dropped or fall back to a real
-   catalog entry, so a hallucinated id never reaches a provider.
+`agentDirect()` runs Hermes 3 (`nousresearch/hermes-3-llama-3.1-70b` by default)
+in a real function-calling loop over openfield's own tools:
+
+| Tool | What the agent does with it |
+|------|------------------------------|
+| `search_presets` | discover preset ids by keyword |
+| `list_cinema` | inspect Cinema Studio option ids |
+| `list_characters` | find Soul ID characters to feature |
+| `set_project` | choose the title + video model |
+| `add_shot` | append a directed shot (subject, presets, per-shot cinema) |
+| `finalize` | end the loop |
+
+The model iterates — searching, then building the shot list one `add_shot` at a
+time — until it calls `finalize`. Every id it emits is validated against the
+catalog before anything reaches a provider. The CLI and Director UI show the full
+tool trace so you can watch it direct.
+
+Override the model with `OPENFIELD_LLM_MODEL` (any OpenAI-compatible endpoint via
+`OPENFIELD_LLM_BASE`). Pass `--simple` / `simple:true` to use the lighter
+one-shot planner instead.
+
+## How a run flows
+
+1. **Direct.** The Hermes agent assembles the storyboard through the tool loop.
+2. **Sanitize.** Unknown preset/model/cinema ids are dropped or fall back to a
+   real catalog entry, so a hallucination never reaches a provider.
 3. **Run.** Each shot goes through the normal router → your configured provider,
-   with Soul ID character threading if you pass `--character`.
+   with per-shot cinema and Soul ID character threading.
 
 ## Setup
 

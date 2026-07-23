@@ -183,9 +183,9 @@ server.registerTool(
     },
   },
   async ({ brief, character, model, dryRun }) => {
-    const { llmConfigured, planStoryboard, runStoryboard } = await import("./orchestrator/index.js");
+    const { llmConfigured, agentDirect, runStoryboard } = await import("./orchestrator/index.js");
     if (!llmConfigured()) return text("No LLM key. Set OPENROUTER_API_KEY or OPENFIELD_LLM_KEY.");
-    const sb = await planStoryboard(brief, character);
+    const sb = (await agentDirect(brief, { character })).storyboard;
     if (model) sb.model = model;
     const plan = `"${sb.title}" — ${sb.shots.length} shots on ${sb.model}\n${sb.shots
       .map((s, i) => `  ${i + 1}. ${s.subject}${s.presets.length ? ` [${s.presets.join(", ")}]` : ""}`)

@@ -194,11 +194,19 @@ async function main() {
     case "direct": {
       const brief = flag("brief") ?? args[1];
       if (!brief) return fail('need a brief: openfield auto "a 3-shot ad for a coffee brand"');
-      const { llmConfigured, planStoryboard, runStoryboard } = await import("./orchestrator/index.js");
+      const { llmConfigured, planStoryboard, agentDirect, runStoryboard, llmConfig } = await import("./orchestrator/index.js");
       if (!llmConfigured()) return fail("no LLM key. Set OPENROUTER_API_KEY (free tier) or OPENFIELD_LLM_KEY.");
       const character = flag("character");
-      console.log("planning storyboard...");
-      const sb = await planStoryboard(brief, character);
+      // Real Hermes agent loop by default; --simple uses the one-shot planner.
+      console.log(`directing with ${llmConfig().model}...`);
+      let sb;
+      if (has("simple")) {
+        sb = await planStoryboard(brief, character);
+      } else {
+        const r = await agentDirect(brief, { character, onStep: (m) => console.log("  ▸ " + m) });
+        sb = r.storyboard;
+        console.log(`  (agent used ${r.steps} steps)`);
+      }
       if (flag("model")) sb.model = flag("model")!;
       console.log(`\n"${sb.title}" — ${sb.shots.length} shots on ${sb.model}`);
       sb.shots.forEach((s, i) =>

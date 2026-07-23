@@ -35,6 +35,7 @@ export async function runStoryboard(
       const { job, provider: prov } = await generate({
         subject: s.subject,
         presets: s.presets,
+        cinema: s.cinema,
         model: sb.model,
         character: opts.character,
         durationSec: s.durationSec,

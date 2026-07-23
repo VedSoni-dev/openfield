@@ -10,6 +10,8 @@ export interface ChatMessage {
   role: "system" | "user" | "assistant" | "tool";
   content: string;
   tool_call_id?: string;
+  /** Assistant turns that called tools carry them here for the next request. */
+  tool_calls?: Array<{ id: string; type: "function"; function: { name: string; arguments: string } }>;
 }
 
 export interface ToolDef {
@@ -31,10 +33,14 @@ export interface ChatResult {
   toolCalls: ToolCall[];
 }
 
+// Default to the real Nous Research Hermes 3 — the same family Higgsfield's
+// "Hermes" agent is built on — tuned for function calling / tool orchestration.
+export const HERMES_MODEL = "nousresearch/hermes-3-llama-3.1-70b";
+
 export function llmConfig() {
   const base = process.env.OPENFIELD_LLM_BASE || "https://openrouter.ai/api/v1";
   const key = process.env.OPENFIELD_LLM_KEY || process.env.OPENROUTER_API_KEY || "";
-  const model = process.env.OPENFIELD_LLM_MODEL || "meta-llama/llama-3.3-70b-instruct:free";
+  const model = process.env.OPENFIELD_LLM_MODEL || HERMES_MODEL;
   return { base, key, model };
 }
 

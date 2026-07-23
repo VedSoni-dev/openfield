@@ -436,9 +436,9 @@
       async function director() {
         view(`
           <div class="panel">
-            <div class="eyebrow">The open Hermes</div>
+            <div class="eyebrow">Powered by Nous Hermes 3 · the open Hermes</div>
             <h2>Director</h2>
-            <div class="sub">Brief → storyboard → shots. Needs an LLM key (OpenRouter free tier).</div>
+            <div class="sub">A real function-calling agent: it searches presets, inspects the cinema catalog, and assembles a storyboard shot by shot. Needs an LLM key (OpenRouter).</div>
             <label>Brief</label>
             <textarea id="brief" placeholder="a moody 3-shot ad for a specialty coffee brand"></textarea>
             <div class="row">
@@ -455,7 +455,9 @@
           const r = await api.post("/api/auto", { brief: $("#brief").value, model: $("#dmodel").value, character: $("#dchar").value || undefined, dry });
           if (r.error) return void ($("#dout").innerHTML = `<span class="pill err">${r.error}</span>`);
           const sb = r.storyboard;
-          let h = `<label>${sb.title} · ${sb.shots.length} shots · ${sb.model}</label>` + sb.shots.map((s, i) => `<div class="card" style="margin-bottom:8px"><b>Shot ${i + 1}</b><p>${s.subject}${s.presets.length ? " · [" + s.presets.join(", ") + "]" : ""}</p></div>`).join("");
+          let h = "";
+          if (r.steps?.length) h += `<label>Agent trace · ${r.steps.length} tool calls</label><pre style="max-height:180px;overflow:auto">${r.steps.map((s) => "▸ " + s).join("\n")}</pre>`;
+          h += `<label>${sb.title} · ${sb.shots.length} shots · ${sb.model}</label>` + sb.shots.map((s, i) => `<div class="card" style="margin-bottom:8px"><b>Shot ${i + 1}</b><p>${s.subject}${s.presets.length ? " · [" + s.presets.join(", ") + "]" : ""}${s.cinema ? " · 🎥 " + Object.values(s.cinema).join(", ") : ""}</p></div>`).join("");
           if (r.result) h += `<div class="out">${r.result.shots.map((s) => `<span class="pill ${s.status === "succeeded" ? "ok" : "err"}">shot ${s.index + 1}: ${s.status}</span>`).join(" ")}</div>`;
           $("#dout").innerHTML = h;
         };

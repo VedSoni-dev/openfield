@@ -105,13 +105,16 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
 
     if (req.method === "POST" && p === "/api/auto") {
       const b = await readBody(req);
-      const { llmConfigured, planStoryboard, runStoryboard } = await import("./orchestrator/index.js");
+      const { llmConfigured, agentDirect, planStoryboard, runStoryboard } = await import("./orchestrator/index.js");
       if (!llmConfigured()) return json(res, 400, { error: "no LLM key (OPENROUTER_API_KEY)" }), true;
-      const sb = await planStoryboard(b.brief, b.character);
+      const steps: string[] = [];
+      const sb = b.simple
+        ? await planStoryboard(b.brief, b.character)
+        : (await agentDirect(b.brief, { character: b.character, onStep: (m) => steps.push(m) })).storyboard;
       if (b.model) sb.model = b.model;
-      if (b.dry) return json(res, 200, { storyboard: sb }), true;
+      if (b.dry) return json(res, 200, { storyboard: sb, steps }), true;
       const result = await runStoryboard(sb, { character: b.character, wait: false });
-      return json(res, 200, { storyboard: sb, result }), true;
+      return json(res, 200, { storyboard: sb, steps, result }), true;
     }
   } catch (e: any) {
     return json(res, 500, { error: e.message }), true;

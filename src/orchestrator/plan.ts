@@ -11,6 +11,7 @@ import { CATALOG } from "../providers/catalog.js";
 export const ShotSchema = z.object({
   subject: z.string(),
   presets: z.array(z.string()).default([]),
+  cinema: z.record(z.string()).optional(),
   durationSec: z.number().optional(),
   narration: z.string().optional(),
 });
