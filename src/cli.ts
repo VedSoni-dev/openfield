@@ -192,6 +192,50 @@ async function main() {
       break;
     }
 
+    case "take": {
+      const t = await import("./takes.js");
+      const sub = args[1];
+      const pid = args[2];
+      if (!pid) return fail("usage: openfield take <gen|list|rate|select|poll> <projectId> ...");
+      if (sub === "gen") {
+        const scene = args[3];
+        if (!scene) return fail("usage: openfield take gen <projectId> <sceneCode> [--count 3] [--model ...] [--wait]");
+        const takes = await t.generateTakes(pid, scene, {
+          count: flag("count") ? Number(flag("count")) : 3,
+          model: flag("model") ?? "seedance-2.0",
+          seed: flag("seed") ? Number(flag("seed")) : undefined,
+          aspectRatio: flag("aspect"),
+          resolution: flag("resolution"),
+          durationSec: flag("duration") ? Number(flag("duration")) : undefined,
+          onProgress: (m) => console.log(m),
+        });
+        const mine = takes.filter((x) => x.sceneCode === scene);
+        console.log(`\n${mine.length} takes for ${scene}:`);
+        for (const x of mine) console.log(`  take ${x.takeNo} — ${x.status}${x.error ? " (" + x.error + ")" : ""} seed ${x.seed}`);
+        if (has("wait")) {
+          console.log("polling…");
+          for (const x of mine.filter((y) => y.status === "queued")) {
+            const done = await (async () => { let r = x; for (let n = 0; n < 60 && r.status !== "succeeded" && r.status !== "failed"; n++) { await new Promise((res) => setTimeout(res, 3000)); r = await t.pollTake(pid, scene, x.takeNo); } return r; })();
+            console.log(`  take ${x.takeNo}: ${done.status} ${done.output?.join(" ") ?? done.error ?? ""}`);
+          }
+        }
+      } else if (sub === "list") {
+        for (const x of t.listTakes(pid, args[3])) console.log(`  ${x.sceneCode} take ${x.takeNo} — ${x.status}${x.rating ? " ★" + x.rating : ""}${x.selected ? " ✓SELECTED" : ""} ${x.output?.[0] ?? ""}`);
+      } else if (sub === "rate") {
+        t.rateTake(pid, args[3], Number(args[4]), Number(args[5]));
+        console.log("rated");
+      } else if (sub === "select") {
+        t.selectTake(pid, args[3], Number(args[4]));
+        console.log("selected");
+      } else if (sub === "poll") {
+        const x = await t.pollTake(pid, args[3], Number(args[4]));
+        console.log(`${x.status} ${x.output?.join(" ") ?? x.error ?? ""}`);
+      } else {
+        console.log("take commands: gen <scene> | list [scene] | rate <scene> <no> <1-5> | select <scene> <no> | poll <scene> <no>");
+      }
+      break;
+    }
+
     case "shotlist":
     case "sl": {
       const d = await import("./director/index.js");

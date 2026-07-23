@@ -67,6 +67,28 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
     if (req.method === "GET" && p === "/api/cinema") return json(res, 200, CINEMA_GROUPS), true;
     if (req.method === "GET" && p === "/api/recipes") return json(res, 200, RECIPES), true;
 
+    // --- Takes ---
+    if (p.startsWith("/api/takes")) {
+      const t = await import("./takes.js");
+      const pid = url.searchParams.get("project") ?? "";
+      if (req.method === "GET" && p === "/api/takes") return json(res, 200, t.listTakes(pid, url.searchParams.get("scene") ?? undefined)), true;
+      if (req.method === "POST" && p === "/api/takes/generate") {
+        const b = await readBody(req);
+        return json(res, 200, await t.generateTakes(pid, b.sceneCode, { count: b.count, model: b.model ?? "seedance-2.0", seed: b.seed, aspectRatio: b.aspect, resolution: b.resolution, durationSec: b.duration })), true;
+      }
+      if (req.method === "POST" && p === "/api/takes/rate") {
+        const b = await readBody(req);
+        return json(res, 200, t.rateTake(pid, b.sceneCode, b.takeNo, b.rating)), true;
+      }
+      if (req.method === "POST" && p === "/api/takes/select") {
+        const b = await readBody(req);
+        return json(res, 200, t.selectTake(pid, b.sceneCode, b.takeNo)), true;
+      }
+      if (req.method === "GET" && p === "/api/takes/poll") {
+        return json(res, 200, await t.pollTake(pid, url.searchParams.get("scene") ?? "", Number(url.searchParams.get("take")))), true;
+      }
+    }
+
     // --- Shotlist Director ---
     if (p.startsWith("/api/director")) {
       const d = await import("./director/index.js");

@@ -112,6 +112,43 @@ export async function generate(opts: GenerateOptions): Promise<Dispatched> {
   return { job, provider: provider.id, prompt };
 }
 
+/** Submit a pre-compiled prompt + refs verbatim (no compose re-wrap). Used by
+ *  the takes engine where the Director already built the full prompt+legend. */
+export async function generateRaw(opts: {
+  prompt: string;
+  model: string;
+  refs?: Ref[];
+  seed?: number;
+  image?: string;
+  durationSec?: number;
+  aspectRatio?: string;
+  resolution?: string;
+  withAudio?: boolean;
+  extra?: Record<string, unknown>;
+}): Promise<Dispatched> {
+  const route = pickRoute(opts.model);
+  if (!route) {
+    const m = findModel(opts.model)!;
+    throw new Error(`no key for ${opts.model}. Set one of: ${m.routes.map((r) => providerFor(r).keyEnv).join(" or ")}`);
+  }
+  const provider = providerFor(route);
+  const { kept } = orderAndCap(opts.refs ?? [], 10);
+  const references = kept.length ? kept.map((r) => resolveRefUrl(r.src)) : undefined;
+  const job = await provider.create({
+    prompt: opts.prompt,
+    model: opts.model,
+    providerModel: route.providerModel,
+    image: opts.image ?? references?.[0],
+    references,
+    withAudio: opts.withAudio,
+    durationSec: opts.durationSec,
+    aspectRatio: opts.aspectRatio,
+    resolution: opts.resolution,
+    extra: { ...(opts.seed != null ? { seed: opts.seed } : {}), ...(opts.extra ?? {}) },
+  });
+  return { job, provider: provider.id, prompt: opts.prompt };
+}
+
 export async function waitFor(
   providerId: string,
   jobId: string,
