@@ -1,8 +1,8 @@
 # openfield
 
-Open-source Higgsfield. **Bring your own video-model keys — get the cinematic preset library for free.**
+**Open-source Higgsfield. Bring your own video-model keys — get the cinematic preset library, character consistency, an AI director, and a desktop app for free.**
 
-Higgsfield is three things: (1) a router that resells Seedance / Kling / Veo / Wan behind one subscription, (2) a paywalled library of "camera control" presets that is really just prompt engineering, and (3) *Hermes*, an agent (fine-tuned Nous Hermes 3) that orchestrates the whole pipeline. openfield gives you 1 and 2 with **your own keys** and no markup, and leaves 3 pluggable to any function-calling LLM.
+Higgsfield is really four things: (1) a router that resells Seedance / Kling / Veo / Wan behind one subscription, (2) a paywalled library of "camera control" presets that is just prompt engineering, (3) *Soul ID* character consistency, and (4) *Hermes*, an agent that orchestrates the whole pipeline. openfield gives you all four with **your own keys** and no markup.
 
 ## Why
 
@@ -12,40 +12,75 @@ You already pay ByteDance / fal / Replicate for the actual model. Higgsfield cha
 
 ```bash
 npm install && npm run build
-cp .env.example .env   # add ONE key to start (FAL_KEY is highest leverage)
+cp .env.example .env    # add ONE key to start (FAL_KEY is highest leverage)
 ```
+
+Node ≥ 20.
 
 ## Use
 
+### CLI
+
 ```bash
-openfield models                    # what you can run + which key reaches it
-openfield presets [query]           # the free preset library
+openfield models                       # models + which key reaches each
+openfield presets [query]              # the free preset library (47+)
 openfield compose --subject "a lone samurai in the rain" --presets dolly-in,orbit
 openfield generate --subject "..." --model seedance-2.0 --presets orbit --wait
-openfield status --provider fal --job <id>
+openfield soul add nova --name "Nova" --ref <img-url> --traits "red bob, freckles"
+openfield generate --subject "..." --character nova --presets tracking --wait
+openfield auto "a moody 3-shot ad for a coffee brand" --model wan-2.2 --wait
+openfield ui                           # local web app (mac + windows + linux)
 ```
 
-`compose` makes no API call — inspect the exact prompt before you spend credits.
+`compose` and `auto --dry` make no API call — inspect before you spend credits.
+
+### Desktop app
+
+```bash
+npm run build && openfield ui          # → http://localhost:4317
+# or the native Electron app:
+cd app && npm install && npm start
+```
+
+Tabs: Studio · Presets · Soul ID · Director. See [docs/desktop.md](docs/desktop.md).
+
+### MCP (generate from Claude Code / any agent)
+
+Point your MCP client at `openfield-mcp`. Tools: `list_presets`, `list_models`,
+`compose_prompt`, `generate_video`, `check_status`, `list_characters`,
+`save_character`, `direct_video`. See [docs/mcp.md](docs/mcp.md).
 
 ## Architecture
 
 ```
 subject + presets ──▶ compose() ──▶ router ──▶ provider adapter ──▶ backend model
-                       (free IP)     (pick by    (BYOK)              (Seedance/Kling/
-                                      key)                            Veo/Wan/...)
+   + Soul ID          (free IP)     (pick by    (BYOK)              (Seedance/Kling/
+   + Director                        key)                            Veo/Wan/...)
 ```
 
-- **Providers** ([`src/providers/`](src/providers/)) — `fal`, `replicate`, `custom` (self-host). Each reads its own key; openfield never proxies it. Add one by implementing the `Provider` interface.
-- **Catalog** ([`src/providers/catalog.ts`](src/providers/catalog.ts)) — canonical model id ➜ multiple provider routes. Router picks the first route whose key you have.
-- **Presets** ([`src/presets/`](src/presets/)) — the giveaway. Camera moves as model-agnostic prompt fragments. Stackable.
-- **Compose** ([`src/compose.ts`](src/compose.ts)) — subject + stacked presets ➜ final prompt + params.
+- **Providers** ([`src/providers/`](src/providers/)) — `fal`, `replicate`, `custom` (self-host). Each reads its own key; openfield never proxies it.
+- **Catalog** ([`src/providers/catalog.ts`](src/providers/catalog.ts)) — model id ➜ multiple provider routes; first configured key wins.
+- **Presets** ([`src/presets/`](src/presets/)) — 47+ camera / lens / lighting / style / vfx fragments. Stackable, model-agnostic.
+- **Soul ID** ([`src/soul.ts`](src/soul.ts)) — character store + reference threading. [docs](docs/soul-id.md).
+- **Orchestrator** ([`src/orchestrator/`](src/orchestrator/)) — LLM director, brief ➜ storyboard ➜ shots. [docs](docs/orchestrator.md).
+- **Server + UI** ([`src/server.ts`](src/server.ts), [`src/ui/`](src/ui/)) — zero-dep local app.
 
-## Roadmap
+## Feature status
 
-- [ ] Lens / lighting / style / VFX preset packs
-- [ ] Character consistency (Soul ID equivalent) via open IP-Adapter / per-subject LoRA
-- [ ] MCP server (copy Higgsfield's growth wedge — generate from Claude Code)
-- [ ] Hermes-equivalent orchestrator: function-calling LLM chains script ➜ shots ➜ generate ➜ stitch
+- [x] BYOK provider router (fal, Replicate, self-host) + 7-model catalog
+- [x] 47+ preset library across 5 categories
+- [x] Prompt composer with stacking + `{subject}` resolution
+- [x] Soul ID character consistency
+- [x] Hermes-equivalent orchestrator (any OpenAI-compatible LLM)
+- [x] MCP server
+- [x] Cross-platform app (local web + Electron for mac/win)
+- [ ] Video stitching (ffmpeg) for multi-shot exports
+- [ ] More provider adapters (direct Volcengine, ComfyUI recipes)
+
+## Contributing
+
+New presets and provider adapters are the easiest, highest-value PRs. See
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

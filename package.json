@@ -12,9 +12,10 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node scripts/copy-assets.mjs",
     "dev": "tsx src/cli.ts",
     "mcp": "tsx src/mcp.ts",
+    "ui": "tsx src/cli.ts ui",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",

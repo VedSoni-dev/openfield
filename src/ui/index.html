@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>openfield</title>
+    <style>
+      :root {
+        --bg: #0c0d10;
+        --panel: #16181d;
+        --panel-2: #1e2127;
+        --line: #2a2e37;
+        --text: #e8eaed;
+        --dim: #9aa0aa;
+        --accent: #7c9cff;
+        --accent-2: #4ade80;
+        --danger: #ff6b6b;
+        --radius: 12px;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #f6f7f9;
+          --panel: #ffffff;
+          --panel-2: #f0f2f5;
+          --line: #e2e5ea;
+          --text: #14161a;
+          --dim: #5b6470;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+      header {
+        display: flex; align-items: center; gap: 14px;
+        padding: 16px 22px; border-bottom: 1px solid var(--line);
+        position: sticky; top: 0; background: var(--bg); z-index: 5;
+      }
+      .logo { font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
+      .logo b { color: var(--accent); }
+      .tag { color: var(--dim); font-size: 13px; }
+      nav { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+      nav button {
+        background: transparent; color: var(--dim); border: 1px solid transparent;
+        padding: 7px 14px; border-radius: 999px; cursor: pointer; font-size: 14px;
+      }
+      nav button.on { background: var(--panel-2); color: var(--text); border-color: var(--line); }
+      main { max-width: 960px; margin: 0 auto; padding: 24px 20px 80px; }
+      .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; margin-bottom: 18px; }
+      h2 { margin: 0 0 4px; font-size: 16px; }
+      .sub { color: var(--dim); font-size: 13px; margin-bottom: 16px; }
+      label { display: block; font-size: 13px; color: var(--dim); margin: 12px 0 6px; }
+      input, textarea, select {
+        width: 100%; background: var(--panel-2); color: var(--text);
+        border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; font: inherit;
+      }
+      textarea { resize: vertical; min-height: 64px; }
+      .row { display: flex; gap: 12px; flex-wrap: wrap; }
+      .row > * { flex: 1; min-width: 160px; }
+      button.act {
+        background: var(--accent); color: #0a0c14; border: none; font-weight: 600;
+        padding: 11px 18px; border-radius: 9px; cursor: pointer; margin-top: 16px;
+      }
+      button.ghost { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); }
+      .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+      .chip {
+        padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line);
+        background: var(--panel-2); cursor: pointer; font-size: 13px; user-select: none;
+      }
+      .chip.on { border-color: var(--accent); color: var(--accent); }
+      .chip small { color: var(--dim); }
+      .cat-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--dim); margin: 16px 0 4px; }
+      pre { background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px; padding: 14px; overflow-x: auto; white-space: pre-wrap; font-size: 13px; }
+      .out { margin-top: 14px; }
+      .pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; background: var(--panel-2); border: 1px solid var(--line); color: var(--dim); }
+      .pill.ok { color: var(--accent-2); border-color: var(--accent-2); }
+      .pill.err { color: var(--danger); border-color: var(--danger); }
+      a { color: var(--accent); }
+      .muted { color: var(--dim); font-size: 13px; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      @media (max-width: 620px) { .grid { grid-template-columns: 1fr; } }
+      .card { background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+      .card b { font-size: 14px; }
+      .card p { margin: 4px 0 0; color: var(--dim); font-size: 13px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="logo"><b>open</b>field</div>
+      <span class="tag" id="cfg">—</span>
+      <nav id="nav"></nav>
+    </header>
+    <main id="view"></main>
+
+    <script>
+      const $ = (s, r = document) => r.querySelector(s);
+      const api = {
+        async get(p) { return (await fetch(p)).json(); },
+        async post(p, b) { return (await fetch(p, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b) })).json(); },
+      };
+      let PRESETS = [], MODELS = [], CONFIGURED = [], SEL = new Set();
+      const TABS = ["Studio", "Presets", "Soul ID", "Director"];
+      let tab = "Studio";
+
+      function nav() {
+        $("#nav").innerHTML = "";
+        for (const t of TABS) {
+          const b = document.createElement("button");
+          b.textContent = t; b.className = t === tab ? "on" : "";
+          b.onclick = () => { tab = t; render(); };
+          $("#nav").appendChild(b);
+        }
+      }
+
+      function presetPicker() {
+        const cats = [...new Set(PRESETS.map((p) => p.category))];
+        return cats.map((cat) => `
+          <div class="cat-title">${cat}</div>
+          <div class="chips">${PRESETS.filter((p) => p.category === cat).map((p) =>
+            `<span class="chip ${SEL.has(p.id) ? "on" : ""}" data-id="${p.id}" title="${p.desc}">${p.label}</span>`
+          ).join("")}</div>`).join("");
+      }
+      function wireChips(root) {
+        root.querySelectorAll(".chip[data-id]").forEach((c) => {
+          c.onclick = () => { const id = c.dataset.id; SEL.has(id) ? SEL.delete(id) : SEL.add(id); c.classList.toggle("on"); };
+        });
+      }
+
+      function modelOptions() {
+        return MODELS.map((m) => {
+          const reachable = m.routes.some((r) => CONFIGURED.includes(r.provider));
+          return `<option value="${m.id}" ${reachable ? "" : "data-x=1"}>${m.label}${reachable ? "" : "  (no key)"}</option>`;
+        }).join("");
+      }
+
+      async function studio() {
+        $("#view").innerHTML = `
+          <div class="panel">
+            <h2>Studio</h2>
+            <div class="sub">Subject + stacked presets → composed prompt → generate. BYO keys.</div>
+            <label>Subject</label>
+            <textarea id="subj" placeholder="a lone astronaut walking across a red dune"></textarea>
+            <div class="row">
+              <div><label>Model</label><select id="model">${modelOptions()}</select></div>
+              <div><label>Character (Soul ID, optional)</label><select id="char"><option value="">none</option></select></div>
+            </div>
+            <label>Presets</label>
+            <div id="picker">${presetPicker()}</div>
+            <div class="row">
+              <button class="act ghost" id="composeBtn">Preview prompt</button>
+              <button class="act" id="genBtn">Generate</button>
+            </div>
+            <div class="out" id="out"></div>
+          </div>`;
+        wireChips($("#picker"));
+        const chars = await api.get("/api/characters");
+        $("#char").innerHTML = `<option value="">none</option>` + chars.map((c) => `<option value="${c.id}">${c.name}</option>`).join("");
+        $("#composeBtn").onclick = async () => {
+          const c = await api.post("/api/compose", { subject: $("#subj").value, presets: [...SEL], character: $("#char").value || undefined });
+          $("#out").innerHTML = `<label>Composed prompt</label><pre>${c.prompt}</pre>` + (Object.keys(c.params || {}).length ? `<label>Params</label><pre>${JSON.stringify(c.params, null, 2)}</pre>` : "");
+        };
+        $("#genBtn").onclick = async () => {
+          $("#out").innerHTML = `<span class="muted">generating…</span>`;
+          const r = await api.post("/api/generate", { subject: $("#subj").value, presets: [...SEL], model: $("#model").value, character: $("#char").value || undefined });
+          if (r.error) { $("#out").innerHTML = `<span class="pill err">${r.error}</span>`; return; }
+          $("#out").innerHTML = `<span class="pill ok">queued on ${r.provider}</span><pre>${r.prompt}</pre><div class="muted">job ${r.job.id}</div><button class="act ghost" id="poll">Check status</button><div id="st"></div>`;
+          $("#poll").onclick = async () => {
+            const s = await api.get(`/api/status?provider=${encodeURIComponent(r.provider)}&job=${encodeURIComponent(r.job.id)}`);
+            $("#st").innerHTML = `<div class="out"><span class="pill ${s.status === "succeeded" ? "ok" : s.status === "failed" ? "err" : ""}">${s.status}</span>` + (s.output?.length ? s.output.map((u) => `<div><a href="${u}" target="_blank">${u}</a></div>`).join("") : "") + `</div>`;
+          };
+        };
+      }
+
+      function presetsTab() {
+        $("#view").innerHTML = `<div class="panel"><h2>Preset library</h2><div class="sub">${PRESETS.length} presets — the part Higgsfield paywalls. MIT here.</div><div class="grid">${PRESETS.map((p) => `<div class="card"><b>${p.label}</b> <span class="pill">${p.category}</span><p>${p.desc}</p></div>`).join("")}</div></div>`;
+      }
+
+      async function soul() {
+        const chars = await api.get("/api/characters");
+        $("#view").innerHTML = `
+          <div class="panel">
+            <h2>Soul ID</h2>
+            <div class="sub">Lock a character across shots. Reference images + look traits.</div>
+            <div class="row">
+              <div><label>Handle</label><input id="cid" placeholder="nova" /></div>
+              <div><label>Name</label><input id="cname" placeholder="Nova" /></div>
+            </div>
+            <label>Reference image URLs (one per line)</label>
+            <textarea id="crefs" placeholder="https://…/front.png&#10;https://…/side.png"></textarea>
+            <label>Traits</label>
+            <input id="ctraits" placeholder="red bob, freckles, green flight jacket" />
+            <button class="act" id="saveChar">Save character</button>
+            <div class="out"><label>Saved</label><div id="charList">${chars.map((c) => `<div class="card"><b>${c.name}</b> <span class="pill">${c.refs.length} refs</span> <button class="chip" data-rm="${c.id}">remove</button><p>${c.traits || ""}</p></div>`).join("") || '<span class="muted">none yet</span>'}</div></div>
+          </div>`;
+        $("#saveChar").onclick = async () => {
+          const refs = $("#crefs").value.split("\n").map((s) => s.trim()).filter(Boolean);
+          await api.post("/api/characters", { id: $("#cid").value.trim(), name: $("#cname").value.trim() || $("#cid").value.trim(), refs, traits: $("#ctraits").value.trim() || undefined });
+          soul();
+        };
+        $("#charList").querySelectorAll("[data-rm]").forEach((b) => {
+          b.onclick = async () => { await fetch(`/api/characters?id=${b.dataset.rm}`, { method: "DELETE" }); soul(); };
+        });
+      }
+
+      async function director() {
+        $("#view").innerHTML = `
+          <div class="panel">
+            <h2>Director</h2>
+            <div class="sub">Brief → storyboard → shots. Needs an LLM key (OpenRouter free tier).</div>
+            <label>Brief</label>
+            <textarea id="brief" placeholder="a moody 3-shot ad for a specialty coffee brand"></textarea>
+            <div class="row">
+              <div><label>Model</label><select id="dmodel">${modelOptions()}</select></div>
+              <div><label>Character (optional)</label><select id="dchar"><option value="">none</option></select></div>
+            </div>
+            <div class="row">
+              <button class="act ghost" id="planBtn">Plan only</button>
+              <button class="act" id="runBtn">Plan + generate</button>
+            </div>
+            <div class="out" id="dout"></div>
+          </div>`;
+        const chars = await api.get("/api/characters");
+        $("#dchar").innerHTML = `<option value="">none</option>` + chars.map((c) => `<option value="${c.id}">${c.name}</option>`).join("");
+        const go = async (dry) => {
+          $("#dout").innerHTML = `<span class="muted">${dry ? "planning" : "planning + generating"}…</span>`;
+          const r = await api.post("/api/auto", { brief: $("#brief").value, model: $("#dmodel").value, character: $("#dchar").value || undefined, dry });
+          if (r.error) { $("#dout").innerHTML = `<span class="pill err">${r.error}</span>`; return; }
+          const sb = r.storyboard;
+          let html = `<label>${sb.title} — ${sb.shots.length} shots on ${sb.model}</label>` + sb.shots.map((s, i) => `<div class="card"><b>Shot ${i + 1}</b><p>${s.subject}${s.presets.length ? " · [" + s.presets.join(", ") + "]" : ""}</p></div>`).join("");
+          if (r.result) html += `<div class="out"><span class="pill">${r.result.provider || "queued"}</span> ` + r.result.shots.map((s) => `<span class="pill ${s.status === "succeeded" ? "ok" : "err"}">${s.status}</span>`).join(" ") + `</div>`;
+          $("#dout").innerHTML = html;
+        };
+        $("#planBtn").onclick = () => go(true);
+        $("#runBtn").onclick = () => go(false);
+      }
+
+      function render() {
+        nav();
+        if (tab === "Studio") studio();
+        else if (tab === "Presets") presetsTab();
+        else if (tab === "Soul ID") soul();
+        else director();
+      }
+
+      (async () => {
+        PRESETS = await api.get("/api/presets");
+        const m = await api.get("/api/models");
+        MODELS = m.models; CONFIGURED = m.configured;
+        $("#cfg").textContent = CONFIGURED.length ? `providers: ${CONFIGURED.join(", ")}` : "no provider key set";
+        render();
+      })();
+    </script>
+  </body>
+</html>

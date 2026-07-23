@@ -102,6 +102,17 @@ async function main() {
       break;
     }
 
+    case "ui": {
+      const port = flag("port") ? Number(flag("port")) : 4317;
+      const { startServer } = await import("./server.js");
+      const { url } = await startServer(port);
+      console.log(`openfield UI running at ${url}`);
+      console.log("Ctrl+C to stop.");
+      // keep process alive
+      await new Promise(() => {});
+      break;
+    }
+
     case "auto":
     case "direct": {
       const brief = flag("brief") ?? args[1];
@@ -175,6 +186,7 @@ Usage:
   openfield generate --subject "..." --model seedance-2.0 --presets orbit --wait
   openfield generate --subject "..." --character nova --presets orbit --wait
   openfield status --provider fal --job <id>
+  openfield ui [--port 4317]              local web app (mac + windows)
   openfield soul add nova --name "Nova" --ref <img-url> --traits "red bob, freckles"
   openfield soul list | show <id> | rm <id>
   openfield auto "a 3-shot moody ad for a coffee brand" --model wan-2.2 --wait

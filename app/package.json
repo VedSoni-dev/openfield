@@ -1,0 +1,38 @@
+{
+  "name": "openfield-desktop",
+  "version": "0.1.0",
+  "description": "openfield desktop app (macOS + Windows)",
+  "private": true,
+  "type": "module",
+  "main": "main.mjs",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "dev.openfield.app",
+    "productName": "openfield",
+    "files": ["main.mjs", "preload.cjs"],
+    "extraResources": [
+      { "from": "../dist", "to": "app/dist" },
+      { "from": "../node_modules/zod", "to": "app/node_modules/zod" }
+    ],
+    "directories": { "output": "release" },
+    "mac": {
+      "target": ["dmg", "zip"],
+      "category": "public.app-category.graphics-design"
+    },
+    "win": {
+      "target": ["nsis", "portable"]
+    },
+    "linux": {
+      "target": ["AppImage"]
+    }
+  }
+}
