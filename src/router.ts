@@ -6,6 +6,7 @@ import { fal } from "./providers/fal.js";
 import { replicate } from "./providers/replicate.js";
 import { custom } from "./providers/custom.js";
 import { compose, type ComposeInput } from "./compose.js";
+import { getCharacter, identityPhrase } from "./soul.js";
 
 const PROVIDERS: Record<string, Provider> = {
   fal,
@@ -33,6 +34,8 @@ export interface GenerateOptions extends ComposeInput {
   durationSec?: number;
   aspectRatio?: string;
   resolution?: string;
+  /** Soul ID character handle. Injects identity phrase + reference images. */
+  character?: string;
   extra?: Record<string, unknown>;
 }
 
@@ -50,12 +53,24 @@ export async function generate(opts: GenerateOptions): Promise<Dispatched> {
     throw new Error(`no key for ${opts.model}. Set one of: ${keys}`);
   }
   const provider = providerFor(route);
-  const { prompt, params } = compose(opts);
+
+  // Soul ID: resolve character, weave identity phrase + reference images.
+  let identity = opts.identity;
+  let references: string[] | undefined;
+  if (opts.character) {
+    const c = getCharacter(opts.character);
+    if (!c) throw new Error(`unknown character: ${opts.character}. Run 'openfield soul list'.`);
+    identity = identityPhrase(c);
+    references = c.refs;
+  }
+
+  const { prompt, params } = compose({ ...opts, identity });
   const job = await provider.create({
     prompt,
     model: opts.model,
     providerModel: route.providerModel,
-    image: opts.image,
+    image: opts.image ?? references?.[0],
+    references,
     durationSec: opts.durationSec,
     aspectRatio: opts.aspectRatio,
     resolution: opts.resolution,

@@ -9,6 +9,8 @@ export interface ComposeInput {
   subject: string;
   /** Preset ids to stack, in order. */
   presets?: string[];
+  /** Soul ID identity phrase, woven in right after the subject. */
+  identity?: string;
 }
 
 export interface Composed {
@@ -29,6 +31,7 @@ export function compose(input: ComposeInput): Composed {
   // Build the prompt: subject first, then each preset fragment with {subject}
   // resolved to a short back-reference so we don't repeat the full subject.
   const parts = [input.subject.trim()];
+  if (input.identity) parts.push(input.identity.trim());
   for (const p of used) {
     parts.push(p.template.replaceAll("{subject}", "the subject"));
   }

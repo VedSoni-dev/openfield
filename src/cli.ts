@@ -4,6 +4,13 @@ import { CATALOG } from "./providers/catalog.js";
 import { PRESETS, searchPresets } from "./presets/index.js";
 import { compose } from "./compose.js";
 import { generate, waitFor, pollOnce, configuredProviders, pickRoute } from "./router.js";
+import {
+  listCharacters,
+  getCharacter,
+  upsertCharacter,
+  removeCharacter,
+  identityPhrase,
+} from "./soul.js";
 
 const args = process.argv.slice(2);
 const cmd = args[0];
@@ -64,6 +71,7 @@ async function main() {
         subject,
         presets,
         model,
+        character: flag("character"),
         image: flag("image"),
         durationSec: flag("duration") ? Number(flag("duration")) : undefined,
         aspectRatio: flag("aspect"),
@@ -94,6 +102,38 @@ async function main() {
       break;
     }
 
+    case "soul": {
+      const sub = args[1];
+      if (sub === "list") {
+        const chars = listCharacters();
+        if (!chars.length) return console.log("no characters. add one: openfield soul add <id> --name \"...\" --ref <url>");
+        for (const c of chars) console.log(`  ${c.id.padEnd(14)} ${c.name}  (${c.refs.length} ref)`);
+      } else if (sub === "add") {
+        const id = args[2];
+        if (!id) return fail('need id: openfield soul add <id> --name "..." --ref <url> [--ref <url>] [--traits "..."]');
+        const refs = args.reduce<string[]>((acc, a, i) => (a === "--ref" && args[i + 1] ? [...acc, args[i + 1]] : acc), []);
+        const c = upsertCharacter({
+          id,
+          name: flag("name") ?? id,
+          refs,
+          traits: flag("traits"),
+          notes: flag("notes"),
+        });
+        console.log(`saved ${c.id}: ${c.name} (${c.refs.length} ref)`);
+        console.log(`identity: ${identityPhrase(c)}`);
+      } else if (sub === "show") {
+        const c = getCharacter(args[2] ?? "");
+        if (!c) return fail("not found");
+        console.log(JSON.stringify(c, null, 2));
+        console.log("\nidentity: " + identityPhrase(c));
+      } else if (sub === "rm") {
+        return console.log(removeCharacter(args[2] ?? "") ? "removed" : "not found");
+      } else {
+        console.log("soul commands: list | add <id> --name --ref | show <id> | rm <id>");
+      }
+      break;
+    }
+
     default:
       console.log(`openfield — open-source Higgsfield. BYO keys, free preset library.
 
@@ -103,7 +143,10 @@ Usage:
   openfield compose --subject "..." --presets dolly-in,orbit
                                          preview the composed prompt (no API call)
   openfield generate --subject "..." --model seedance-2.0 --presets orbit --wait
+  openfield generate --subject "..." --character nova --presets orbit --wait
   openfield status --provider fal --job <id>
+  openfield soul add nova --name "Nova" --ref <img-url> --traits "red bob, freckles"
+  openfield soul list | show <id> | rm <id>
 
 Keys (bring your own): FAL_KEY, REPLICATE_API_TOKEN, OPENFIELD_CUSTOM_URL`);
   }

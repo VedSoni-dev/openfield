@@ -14,6 +14,7 @@ import { CATALOG } from "./providers/catalog.js";
 import { PRESETS, searchPresets, byCategory } from "./presets/index.js";
 import { compose } from "./compose.js";
 import { generate, pollOnce, configuredProviders, pickRoute } from "./router.js";
+import { listCharacters, upsertCharacter, identityPhrase } from "./soul.js";
 
 const server = new McpServer({ name: "openfield", version: "0.1.0" });
 
@@ -89,13 +90,14 @@ server.registerTool(
       subject: z.string(),
       model: z.string().default("seedance-2.0"),
       presets: z.array(z.string()).optional(),
+      character: z.string().optional().describe("Soul ID character handle for consistency"),
       image: z.string().optional().describe("Start-frame image url for image-to-video"),
       durationSec: z.number().optional(),
       aspectRatio: z.string().optional(),
       resolution: z.string().optional(),
     },
   },
-  async ({ subject, model, presets, image, durationSec, aspectRatio, resolution }) => {
+  async ({ subject, model, presets, character, image, durationSec, aspectRatio, resolution }) => {
     const route = pickRoute(model);
     if (!route)
       return text(`No configured key for ${model}. Set a provider key and retry.`);
@@ -103,6 +105,7 @@ server.registerTool(
       subject,
       presets,
       model,
+      character,
       image,
       durationSec,
       aspectRatio,
@@ -130,6 +133,39 @@ server.registerTool(
     const out = j.output?.length ? `\noutput:\n${j.output.join("\n")}` : "";
     const err = j.error ? `\nerror: ${j.error}` : "";
     return text(`status: ${j.status}${out}${err}`);
+  },
+);
+
+server.registerTool(
+  "list_characters",
+  {
+    title: "List Soul ID characters",
+    description: "List saved characters (Soul ID) available for consistent generation.",
+    inputSchema: {},
+  },
+  async () => {
+    const chars = listCharacters();
+    if (!chars.length) return text("No characters saved. Use save_character first.");
+    return text(chars.map((c) => `${c.id} — ${c.name} (${c.refs.length} refs)`).join("\n"));
+  },
+);
+
+server.registerTool(
+  "save_character",
+  {
+    title: "Save Soul ID character",
+    description:
+      "Create/update a character for consistent generation: a handle, name, reference image urls, and optional look traits.",
+    inputSchema: {
+      id: z.string().describe("kebab-case handle"),
+      name: z.string(),
+      refs: z.array(z.string()).describe("reference image urls"),
+      traits: z.string().optional().describe("look descriptors that pin the character"),
+    },
+  },
+  async ({ id, name, refs, traits }) => {
+    const c = upsertCharacter({ id, name, refs, traits });
+    return text(`Saved ${c.id}: ${c.name} (${c.refs.length} refs)\nidentity: ${identityPhrase(c)}`);
   },
 );
 

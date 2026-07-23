@@ -24,6 +24,7 @@ export const fal: Provider = {
     const body: Record<string, unknown> = {
       prompt: params.prompt,
       ...(params.image ? { image_url: params.image } : {}),
+      ...(params.references?.length ? { reference_image_urls: params.references } : {}),
       ...(params.durationSec ? { duration: String(params.durationSec) } : {}),
       ...(params.aspectRatio ? { aspect_ratio: params.aspectRatio } : {}),
       ...(params.resolution ? { resolution: params.resolution } : {}),

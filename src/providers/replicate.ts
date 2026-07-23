@@ -30,6 +30,7 @@ export const replicate: Provider = {
     const input: Record<string, unknown> = {
       prompt: params.prompt,
       ...(params.image ? { image: params.image } : {}),
+      ...(params.references?.length ? { reference_images: params.references } : {}),
       ...(params.durationSec ? { duration: params.durationSec } : {}),
       ...(params.aspectRatio ? { aspect_ratio: params.aspectRatio } : {}),
       ...(params.extra ?? {}),

@@ -12,6 +12,8 @@ export interface GenerateParams {
   providerModel: string;
   /** Optional start frame (image url or local path). */
   image?: string;
+  /** Character reference images (Soul ID). Providers use as subject reference. */
+  references?: string[];
   durationSec?: number;
   aspectRatio?: string; // "16:9" | "9:16" | "1:1" | ...
   resolution?: string; // "720p" | "1080p" | "4k"
