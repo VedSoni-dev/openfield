@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "openfield": {
+      "command": "node",
+      "args": ["./dist/mcp.js"],
+      "env": {
+        "FAL_KEY": "",
+        "REPLICATE_API_TOKEN": ""
+      }
+    }
+  }
+}
