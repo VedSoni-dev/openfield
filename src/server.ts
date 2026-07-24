@@ -67,6 +67,29 @@ async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise
     if (req.method === "GET" && p === "/api/cinema") return json(res, 200, CINEMA_GROUPS), true;
     if (req.method === "GET" && p === "/api/recipes") return json(res, 200, RECIPES), true;
 
+    // --- Assembly & export ---
+    if (p.startsWith("/api/assemble") || p.startsWith("/api/export")) {
+      const a = await import("./assemble.js");
+      const pid = url.searchParams.get("project") ?? "";
+      if (req.method === "GET" && p === "/api/assemble/summary") return json(res, 200, a.assemblySummary(pid)), true;
+      if (req.method === "GET" && p === "/api/export/fcpxml") {
+        res.writeHead(200, { "Content-Type": "application/xml", "Content-Disposition": "attachment; filename=openfield.fcpxml" });
+        return res.end(a.exportFCPXML(pid)), true;
+      }
+      if (req.method === "GET" && p === "/api/export/csv") {
+        res.writeHead(200, { "Content-Type": "text/csv", "Content-Disposition": "attachment; filename=manifest.csv" });
+        return res.end(a.exportManifestCsv(pid)), true;
+      }
+      if (req.method === "POST" && p === "/api/assemble/stringout") {
+        const b = await readBody(req);
+        try {
+          return json(res, 200, await a.assembleStringout(pid, b.out ?? "openfield.mp4")), true;
+        } catch (e: any) {
+          return json(res, 400, { error: e.message }), true;
+        }
+      }
+    }
+
     // --- Takes ---
     if (p.startsWith("/api/takes")) {
       const t = await import("./takes.js");

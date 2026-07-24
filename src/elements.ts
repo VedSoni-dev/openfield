@@ -211,3 +211,17 @@ export function buildManifest(projectId: string): Array<{ handle: string; type: 
 export function extFromName(name: string): string {
   return (extname(name) || ".png").replace(/^\./, "");
 }
+
+/** Create a top-down schematic element for a location (DOC 09). Handle is
+ *  <location>_schematic; attaches at high ref priority to pin spatial layout. */
+export function createSchematic(projectId: string, locationHandle: string, description?: string): Element {
+  const loc = getElement(projectId, locationHandle);
+  if (!loc) throw new Error(`no location @${locationHandle}`);
+  return upsertElement(projectId, {
+    handle: `${locationHandle}_schematic`,
+    type: "schematic",
+    displayName: `${loc.displayName} — schematic`,
+    description: description ?? `top-down layout map of ${loc.displayName}; positions fixed and identical across all cuts`,
+    parentHandle: locationHandle,
+  });
+}

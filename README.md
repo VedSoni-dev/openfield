@@ -76,6 +76,7 @@ subject + presets ──▶ compose() ──▶ router ──▶ provider adapte
 - [x] Cinema Studio — camera body / lens / focal / aperture / shot / angle ([docs](docs/cinema-studio.md))
 - [x] Recipes — one-click template gallery ([docs](docs/recipes.md))
 - [x] Prompt composer with stacking + `{subject}` resolution
+- [x] **Cinema Studio workflow** — Projects · Elements/@handle registry (versions, lock, variants, schematics) · full Shotlist Director · Takes economy · Assembly + FCPXML/MP4 export. Real reference-image attachment. ([docs](docs/cinema-workflow.md))
 - [x] Prompt-first Studio: generation bar with Genre/Style/Camera/Character/Location pills, @-mentions, Image/Video, aspect/res/duration/batch/audio, hero + gallery
 - [x] Soul ID character consistency + Locations (consistent settings, `@`-mentioned)
 - [x] Operations: image start-frames, upscale, lipsync, video-to-video restyle ([docs](docs/operations.md))

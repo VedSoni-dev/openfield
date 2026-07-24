@@ -192,6 +192,42 @@ async function main() {
       break;
     }
 
+    case "assemble": {
+      const pid = args[1];
+      if (!pid) return fail("usage: openfield assemble <projectId> --out film.mp4");
+      const { assembleStringout, assemblySummary } = await import("./assemble.js");
+      const sel = assemblySummary(pid);
+      if (!sel.length) return fail("no selected takes. select one per scene: openfield take select <pid> <scene> <no>");
+      console.log(`assembling ${sel.length} selected take(s): ${sel.map((s) => s.scene + ":" + s.take).join(", ")}`);
+      try {
+        const r = await assembleStringout(pid, flag("out") ?? "openfield.mp4", (m) => console.log("  " + m));
+        console.log(`film → ${r.out} (${r.clips} clips)`);
+      } catch (e: any) {
+        return fail(e.message);
+      }
+      break;
+    }
+
+    case "export": {
+      const kind = args[1];
+      const pid = args[2];
+      if (!pid) return fail("usage: openfield export <fcpxml|csv> <projectId> --out file");
+      const { exportFCPXML, exportManifestCsv } = await import("./assemble.js");
+      const { writeFileSync } = await import("node:fs");
+      if (kind === "fcpxml") {
+        const out = flag("out") ?? "openfield.fcpxml";
+        writeFileSync(out, exportFCPXML(pid, flag("title") ?? "openfield cut"));
+        console.log(`wrote ${out} — open in Final Cut Pro`);
+      } else if (kind === "csv") {
+        const out = flag("out") ?? "manifest.csv";
+        writeFileSync(out, exportManifestCsv(pid));
+        console.log(`wrote ${out}`);
+      } else {
+        return fail("export kinds: fcpxml | csv");
+      }
+      break;
+    }
+
     case "take": {
       const t = await import("./takes.js");
       const sub = args[1];
@@ -329,6 +365,9 @@ async function main() {
       } else if (sub === "variant") {
         const e = el.forkVariant(pid, args[3] ?? "", args[4] ?? "", flag("desc"));
         console.log(`@${e.handle} forked from @${e.parentHandle}`);
+      } else if (sub === "schematic") {
+        const e = el.createSchematic(pid, args[3] ?? "", flag("desc"));
+        console.log(`@${e.handle} created — attach it to scenes to pin spatial layout`);
       } else {
         if (!pid) return fail("usage: openfield element list <projectId>");
         const es = el.listElements(pid);
